@@ -1,35 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import LandingPage from './pages/LandingPage';
+import ChatPage from './pages/ChatPage';
+import AdminLayout from './layouts/AdminLayout';
+import EvaluatePage from './pages/admin/EvaluatePage';
+import IngestPage from './pages/admin/IngestPage';
+import VectorsResetPage from './pages/admin/VectorsResetPage';
+import VectorsDeletePage from './pages/admin/VectorsDeletePage';
+import VectorsSourcesPage from './pages/admin/VectorsSourcesPage';
+import VectorsSourceDetailPage from './pages/admin/VectorsSourceDetailPage';
+import './styles/layout.css';
+import './styles/components.css';
+import './styles/chat.css';
+import './styles/admin.css';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/chat" element={<ChatPage />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="evaluate" replace />} />
+          <Route path="evaluate" element={<EvaluatePage />} />
+          <Route path="ingest" element={<IngestPage />} />
+          <Route path="vectors/reset" element={<VectorsResetPage />} />
+          <Route path="vectors/delete-by-source" element={<VectorsDeletePage />} />
+          <Route path="vectors/sources" element={<VectorsSourcesPage />} />
+          <Route path="vectors/source-detail" element={<VectorsSourceDetailPage />} />
+        </Route>
+      </Routes>
     </>
-  )
+  );
 }
-
-export default App
