@@ -3,7 +3,7 @@ import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { postChat, ApiError } from '../api/client';
 import type { ChatResponse } from '../types/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -135,19 +135,20 @@ export default function ConversationPage() {
 
         <div className="p-4 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <form onSubmit={handleSubmit} className="flex gap-2 relative">
-            <Input
+            <Textarea
               placeholder="Ketik pesan Anda..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={loading}
-              className="pr-12 py-6 text-base shadow-sm"
+              className="pr-12 py-3 text-base shadow-sm resize-y min-h-20"
+              rows={3}
               autoFocus
             />
             <Button 
               type="submit" 
               size="icon" 
               disabled={loading || !query.trim()}
-              className="absolute right-1 top-1 bottom-1 h-auto w-10 bg-primary hover:bg-primary/90 transition-colors"
+              className="absolute right-1 bottom-1 h-10 w-10 bg-primary hover:bg-primary/90 transition-colors"
             >
               <Send className="w-4 h-4" />
               <span className="sr-only">Kirim</span>

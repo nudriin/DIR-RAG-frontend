@@ -7,7 +7,7 @@ import DebugPanel from '../components/DebugPanel';
 import TracePanel from '../components/TracePanel';
 import Collapsible from '../components/Collapsible';
 import MarkdownText from '../components/MarkdownText';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Send, AlertTriangle, Lightbulb, Bug } from 'lucide-react';
@@ -53,14 +53,14 @@ export default function ChatPage() {
       {/* Input Area - Sticky Top */}
       <div className="sticky top-16 z-10 border-b bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:p-6">
         <div className="mx-auto max-w-3xl">
-          <form className="flex gap-2" onSubmit={handleSubmit}>
-            <Input
-              className="h-12 text-base shadow-sm"
-              type="text"
+          <form className="flex items-start gap-2" onSubmit={handleSubmit}>
+            <Textarea
+              className="text-base shadow-sm resize-y min-h-20"
               placeholder="Ketik pertanyaan Anda di sini..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={loading}
+              rows={3}
               autoFocus
             />
             <Button size="lg" className="h-12 px-6" type="submit" disabled={loading || !query.trim()}>
