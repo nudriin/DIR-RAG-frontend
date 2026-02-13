@@ -44,7 +44,7 @@ export default function VectorsSourcesPage() {
             Daftar semua source yang tersimpan di vector store.
           </p>
         </div>
-        <Button onClick={fetchSources} disabled={loading}>
+        <Button variant="outline" onClick={fetchSources} disabled={loading}>
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
           Refresh
         </Button>
