@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import { postEvaluate, ApiError } from '../../api/client';
 import type { EvaluateResponse } from '../../types/api';
-import Spinner from '../../components/Spinner';
 import ErrorMessage from '../../components/ErrorMessage';
 import RagasCard from '../../components/RagasCard';
-import '../../styles/admin.css';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Loader2, Play } from 'lucide-react';
 
 export default function EvaluatePage() {
   const [questions, setQuestions] = useState('');
@@ -80,83 +83,94 @@ export default function EvaluatePage() {
   };
 
   return (
-    <div>
-      <div className="admin-page-header">
-        <h2>📊 Evaluate</h2>
-        <p className="admin-page-desc">
-          Evaluasi performa RAG pipeline dengan pertanyaan dan ground truth opsional.
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-3xl font-bold tracking-tight">Evaluate</h2>
+        <p className="text-muted-foreground">
+          Evaluasi performa RAG pipeline dengan kumpulan pertanyaan dan ground truth (opsional).
         </p>
       </div>
 
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Questions (satu per baris) *</label>
-          <textarea
-            className="textarea"
-            rows={5}
-            placeholder={"Apa itu machine learning?\nBagaimana cara kerja neural network?"}
-            value={questions}
-            onChange={(e) => setQuestions(e.target.value)}
-            disabled={loading}
-          />
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Input Evaluasi</CardTitle>
+          <CardDescription>Masukkan data untuk menjalankan evaluasi RAGAS.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="questions">Questions (satu per baris) *</Label>
+              <Textarea
+                id="questions"
+                rows={5}
+                placeholder={"Apa itu machine learning?\nBagaimana cara kerja neural network?"}
+                value={questions}
+                onChange={(e) => setQuestions(e.target.value)}
+                disabled={loading}
+              />
+            </div>
 
-        <div className="form-group">
-          <label>Ground Truth Answers (opsional, sejajar dengan questions)</label>
-          <textarea
-            className="textarea"
-            rows={5}
-            placeholder={"Machine learning adalah...\nNeural network bekerja dengan..."}
-            value={groundTruth}
-            onChange={(e) => setGroundTruth(e.target.value)}
-            disabled={loading}
-          />
-          <p className="form-hint">Kosongkan jika tidak ada ground truth</p>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="groundTruth">Ground Truth Answers (opsional)</Label>
+              <Textarea
+                id="groundTruth"
+                rows={5}
+                placeholder={"Machine learning adalah...\nNeural network bekerja dengan..."}
+                value={groundTruth}
+                onChange={(e) => setGroundTruth(e.target.value)}
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">Harus sejajar dengan questions. Kosongkan jika tidak ada.</p>
+            </div>
 
-        <div className="form-group">
-          <label>Relevant Doc IDs (opsional, JSON array of arrays)</label>
-          <textarea
-            className="textarea"
-            rows={3}
-            placeholder={'[["doc_id_1", "doc_id_2"], ["doc_id_3"]]'}
-            value={docIds}
-            onChange={(e) => setDocIds(e.target.value)}
-            disabled={loading}
-          />
-          <p className="form-hint">Format: [["id1","id2"], ["id3"]]</p>
-        </div>
+            <div className="space-y-2">
+              <Label htmlFor="docIds">Relevant Doc IDs (opsional, JSON array)</Label>
+              <Textarea
+                id="docIds"
+                rows={3}
+                placeholder={'[["doc_id_1", "doc_id_2"], ["doc_id_3"]]'}
+                value={docIds}
+                onChange={(e) => setDocIds(e.target.value)}
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">Format: [["id1","id2"], ["id3"]]</p>
+            </div>
 
-        <button className="btn btn-primary" type="submit" disabled={loading}>
-          {loading ? <Spinner small /> : '🚀'} Jalankan Evaluasi
-        </button>
-      </form>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
+              Jalankan Evaluasi
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       {error && (
-        <div style={{ marginTop: 'var(--space-md)' }}>
-          <ErrorMessage message={error} onDismiss={() => setError(null)} />
-        </div>
+        <ErrorMessage message={error} onDismiss={() => setError(null)} />
       )}
 
-      {loading && <Spinner text="Menjalankan evaluasi..." />}
-
       {result && (
-        <div style={{ marginTop: 'var(--space-lg)' }}>
-          <div className="evaluate-results">
-            <div className="evaluate-metric">
-              <div className="evaluate-metric-label">Hit Rate</div>
-              <div className="evaluate-metric-value">{result.hit_rate.toFixed(4)}</div>
-            </div>
-            <div className="evaluate-metric">
-              <div className="evaluate-metric-label">MRR</div>
-              <div className="evaluate-metric-value">{result.mrr.toFixed(4)}</div>
-            </div>
+        <div className="space-y-6 animate-in fade-in-50">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Hit Rate</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{result.hit_rate.toFixed(4)}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">MRR</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{result.mrr.toFixed(4)}</div>
+              </CardContent>
+            </Card>
           </div>
 
           {Object.keys(result.ragas).length > 0 && (
-            <div style={{ marginTop: 'var(--space-md)' }}>
-              <RagasCard ragas={result.ragas} />
-            </div>
+            <RagasCard ragas={result.ragas} />
           )}
         </div>
       )}

@@ -1,4 +1,4 @@
-import '../styles/chat.css';
+
 
 interface EntropyChartProps {
   values: number[];
@@ -27,7 +27,7 @@ export default function EntropyChart({ values }: EntropyChartProps) {
   const areaPoints = `0,${height} ${points} 100,${height}`;
 
   return (
-    <div className="entropy-chart">
+    <div className="relative h-[60px] w-full">
       <svg viewBox={`0 0 100 ${height}`} preserveAspectRatio="none">
         <defs>
           <linearGradient id="entropyGrad" x1="0" y1="0" x2="0" y2="1">
@@ -63,7 +63,7 @@ export default function EntropyChart({ values }: EntropyChartProps) {
           );
         })}
       </svg>
-      <div className="entropy-values">
+      <div className="mt-1 flex justify-between text-[10px] text-muted-foreground">
         {values.map((v, i) => (
           <span key={i}>{v.toFixed(4)}</span>
         ))}

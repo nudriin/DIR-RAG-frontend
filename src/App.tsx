@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
+import ConversationPage from './pages/ConversationPage';
 import ChatPage from './pages/ChatPage';
 import AdminLayout from './layouts/AdminLayout';
 import EvaluatePage from './pages/admin/EvaluatePage';
@@ -9,10 +10,8 @@ import VectorsResetPage from './pages/admin/VectorsResetPage';
 import VectorsDeletePage from './pages/admin/VectorsDeletePage';
 import VectorsSourcesPage from './pages/admin/VectorsSourcesPage';
 import VectorsSourceDetailPage from './pages/admin/VectorsSourceDetailPage';
-import './styles/layout.css';
-import './styles/components.css';
-import './styles/chat.css';
-import './styles/admin.css';
+
+
 
 export default function App() {
   return (
@@ -20,6 +19,7 @@ export default function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/conversation" element={<ConversationPage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<Navigate to="evaluate" replace />} />

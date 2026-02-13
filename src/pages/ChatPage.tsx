@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { postChat, ApiError } from '../api/client';
 import type { ChatResponse } from '../types/api';
-import Spinner from '../components/Spinner';
 import ErrorMessage from '../components/ErrorMessage';
 import SourcesList from '../components/SourcesList';
 import DebugPanel from '../components/DebugPanel';
 import TracePanel from '../components/TracePanel';
 import Collapsible from '../components/Collapsible';
 import MarkdownText from '../components/MarkdownText';
-import '../styles/chat.css';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, Send, AlertTriangle, Lightbulb, Bug } from 'lucide-react';
 
 export default function ChatPage() {
   const [query, setQuery] = useState('');
@@ -47,13 +49,13 @@ export default function ChatPage() {
   const iterations = result?.iterations;
 
   return (
-    <div className="chat-page">
-      <div className="page-container">
-        {/* Input Area */}
-        <div className="chat-input-area">
-          <form className="chat-input-wrapper" onSubmit={handleSubmit}>
-            <input
-              className="input"
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col">
+      {/* Input Area - Sticky Top */}
+      <div className="sticky top-16 z-10 border-b bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:p-6">
+        <div className="mx-auto max-w-3xl">
+          <form className="flex gap-2" onSubmit={handleSubmit}>
+            <Input
+              className="h-12 text-base shadow-sm"
               type="text"
               placeholder="Ketik pertanyaan Anda di sini..."
               value={query}
@@ -61,53 +63,65 @@ export default function ChatPage() {
               disabled={loading}
               autoFocus
             />
-            <button className="btn btn-primary" type="submit" disabled={loading || !query.trim()}>
-              {loading ? <Spinner small /> : '🚀'} Kirim
-            </button>
+            <Button size="lg" className="h-12 px-6" type="submit" disabled={loading || !query.trim()}>
+              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              Kirim
+            </Button>
           </form>
         </div>
+      </div>
 
+      <div className="container mx-auto max-w-3xl flex-1 p-4 sm:p-6">
         {/* Error */}
         {error && <ErrorMessage message={error} onDismiss={() => setError(null)} />}
 
         {/* Loading */}
-        {loading && <Spinner text="Sedang memproses pertanyaan..." />}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+             <Loader2 className="mb-4 h-10 w-10 animate-spin text-primary" />
+             <p className="text-sm font-medium">Sedang memproses pertanyaan...</p>
+          </div>
+        )}
 
         {/* Result */}
         {result && (
-          <div className="chat-result">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
             {/* Fallback Banner */}
             {isFallback && (
-              <div className="banner banner-warning fallback-banner">
-                ⚠ Jawaban ini menggunakan fallback. Informasi mungkin tidak tersedia
-                dalam dokumen yang di-ingest.
+              <div className="flex items-center gap-3 rounded-md border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200">
+                <AlertTriangle className="h-5 w-5 shrink-0" />
+                <p>Jawaban ini menggunakan fallback. Informasi mungkin tidak tersedia dalam dokumen yang di-ingest.</p>
               </div>
             )}
 
             {/* Answer Card */}
-            <div className="answer-card">
-              <div className="answer-header">
-                <h3>💡 Jawaban</h3>
-                <div className="answer-meta">
-                  {iterations != null && (
-                    <div className="answer-meta-item">
-                      Iterasi: <span className="answer-meta-value">{iterations}</span>
-                    </div>
-                  )}
-                  {confidence != null && (
-                    <div className="answer-meta-item">
-                      Confidence:{' '}
-                      <span className="answer-meta-value">
-                        {(confidence * 100).toFixed(1)}%
-                      </span>
-                    </div>
-                  )}
+            <Card className="border-primary/20 shadow-md">
+              <CardHeader className="bg-primary/5 pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Lightbulb className="h-6 w-6 text-primary" />
+                    <CardTitle>Jawaban AI</CardTitle>
+                  </div>
+                  <div className="flex gap-3 text-xs font-medium text-muted-foreground">
+                    {iterations != null && (
+                      <div className="rounded-full bg-background border px-2.5 py-1">
+                        Iterasi: <span className="font-mono text-primary">{iterations}</span>
+                      </div>
+                    )}
+                    {confidence != null && (
+                      <div className="rounded-full bg-background border px-2.5 py-1">
+                        Conf: <span className="font-mono text-primary">{(confidence * 100).toFixed(1)}%</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="answer-body">
-                <MarkdownText content={result.answer ?? 'Tidak ada jawaban.'} />
-              </div>
-            </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                 <div className="prose prose-neutral dark:prose-invert max-w-none">
+                    <MarkdownText content={result.answer ?? 'Tidak ada jawaban.'} />
+                 </div>
+              </CardContent>
+            </Card>
 
             {/* Sources */}
             {result.sources && result.sources.length > 0 && (
@@ -116,14 +130,17 @@ export default function ChatPage() {
 
             {/* Trace */}
             {result.trace && result.trace.length > 0 && (
-              <div style={{ marginBottom: 'var(--space-md)' }}>
-                <TracePanel trace={result.trace} />
-              </div>
+              <TracePanel trace={result.trace} />
             )}
 
             {/* Debug Panel */}
             {result.debug_logs && (
-              <Collapsible title="🐛 Debug Logs">
+              <Collapsible title={
+                <div className="flex items-center gap-2">
+                  <Bug className="h-4 w-4" />
+                  <span>Debug Logs</span>
+                </div>
+              }>
                 <DebugPanel debug={result.debug_logs} />
               </Collapsible>
             )}

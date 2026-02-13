@@ -1,4 +1,4 @@
-import '../styles/admin.css';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface RagasCardProps {
   ragas: Record<string, number>;
@@ -9,20 +9,26 @@ export default function RagasCard({ ragas }: RagasCardProps) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="ragas-card">
-      <h4>📊 RAGAS Metrics</h4>
-      {entries.map(([key, value]) => (
-        <div key={key} className="ragas-item">
-          <span className="ragas-label">{key}</span>
-          <div className="ragas-bar-wrapper">
-            <div
-              className="ragas-bar"
-              style={{ width: `${Math.min(value * 100, 100)}%` }}
-            />
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-medium">📊 RAGAS Metrics</CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-2">
+        {entries.map(([key, value]) => (
+          <div key={key} className="space-y-1">
+            <div className="flex justify-between text-xs">
+              <span className="font-medium text-muted-foreground">{key}</span>
+              <span className="font-mono">{value.toFixed(4)}</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full bg-primary transition-all duration-500 ease-in-out"
+                style={{ width: `${Math.min(value * 100, 100)}%` }}
+              />
+            </div>
           </div>
-          <span className="ragas-value">{value.toFixed(4)}</span>
-        </div>
-      ))}
-    </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }

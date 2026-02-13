@@ -1,26 +1,32 @@
 import { useState, type ReactNode } from 'react';
-import '../styles/components.css';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CollapsibleProps {
-  title: string;
+  title: ReactNode;
   children: ReactNode;
   defaultOpen?: boolean;
+  className?: string;
 }
 
-export default function Collapsible({ title, children, defaultOpen = false }: CollapsibleProps) {
+export default function Collapsible({ title, children, defaultOpen = false, className }: CollapsibleProps) {
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className={`collapsible ${open ? 'is-open' : ''}`}>
-      <button className="collapsible-header" onClick={() => setOpen(!open)}>
+    <div className={cn("rounded-md border bg-card text-card-foreground shadow-sm", className)}>
+      <button
+        type="button"
+        className="flex w-full items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-muted/50"
+        onClick={() => setOpen(!open)}
+      >
         <span>{title}</span>
-        <span className="collapsible-icon">▼</span>
+        {open ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
       </button>
-      <div className="collapsible-body">
-        <div className="collapsible-content">
+      {open && (
+        <div className="border-t px-4 py-3 text-sm">
           {children}
         </div>
-      </div>
+      )}
     </div>
   );
 }

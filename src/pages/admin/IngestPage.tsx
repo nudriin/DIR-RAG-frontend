@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
 import { postIngest, ApiError } from '../../api/client';
 import type { IngestResponse } from '../../types/api';
-import Spinner from '../../components/Spinner';
 import ErrorMessage from '../../components/ErrorMessage';
-import '../../styles/admin.css';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Loader2, Upload, FileText, CloudUpload } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const ALLOWED_TYPES = ['application/pdf', 'text/html'];
 const ALLOWED_EXTENSIONS = ['.pdf', '.html', '.htm'];
@@ -43,6 +45,10 @@ export default function IngestPage() {
     }
   };
 
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
   const handleUpload = async () => {
     if (!file) return;
     setLoading(true);
@@ -66,65 +72,93 @@ export default function IngestPage() {
   };
 
   return (
-    <div>
-      <div className="admin-page-header">
-        <h2>📥 Ingest Dokumen</h2>
-        <p className="admin-page-desc">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-3xl font-bold tracking-tight">Ingest Dokumen</h2>
+        <p className="text-muted-foreground">
           Upload file PDF atau HTML untuk ditambahkan ke vector store.
         </p>
       </div>
 
-      <div
-        className={`upload-zone ${file ? 'has-file' : ''}`}
-        onClick={() => fileRef.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={handleDrop}
-      >
-        <div className="upload-icon">{file ? '📄' : '☁'}</div>
-        <div className="upload-text">
-          {file ? 'File siap di-upload' : 'Klik atau drag file ke sini'}
-        </div>
-        <div className="upload-hint">PDF, HTML (max. sesuai konfigurasi backend)</div>
-        {file && <div className="upload-filename">{file.name}</div>}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Upload File</CardTitle>
+          <CardDescription>Drag & drop file di sini atau klik untuk memilih.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div
+            className={cn(
+              "flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center transition-colors hover:bg-muted/50 cursor-pointer",
+              file ? "border-primary/50 bg-primary/5" : "border-muted-foreground/25",
+              "hover:border-primary/50"
+            )}
+            onClick={() => fileRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            <div className="mb-4 rounded-full bg-primary/10 p-4 text-primary">
+              {file ? <FileText className="h-8 w-8" /> : <CloudUpload className="h-8 w-8" />}
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">
+                {file ? file.name : 'Klik atau drag file ke sini'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                PDF, HTML (max. sesuai konfigurasi backend)
+              </p>
+            </div>
+          </div>
 
-      <input
-        ref={fileRef}
-        type="file"
-        accept=".pdf,.html,.htm"
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-      />
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.html,.htm"
+            onChange={handleFileChange}
+            className="hidden"
+          />
 
-      <div style={{ marginTop: 'var(--space-md)' }}>
-        <button
-          className="btn btn-primary"
-          onClick={handleUpload}
-          disabled={!file || loading}
-        >
-          {loading ? <Spinner small /> : '📤'} Upload & Ingest
-        </button>
-      </div>
+          <Button 
+            onClick={handleUpload} 
+            disabled={!file || loading} 
+            className="w-full sm:w-auto"
+          >
+            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+            Upload & Ingest
+          </Button>
+        </CardContent>
+      </Card>
 
       {error && (
-        <div style={{ marginTop: 'var(--space-md)' }}>
-          <ErrorMessage message={error} onDismiss={() => setError(null)} />
+        <ErrorMessage message={error} onDismiss={() => setError(null)} />
+      )}
+
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+           <div className="flex flex-col items-center gap-2">
+             <Loader2 className="h-8 w-8 animate-spin text-primary" />
+             <p className="text-sm text-muted-foreground">Mengupload dan memproses dokumen...</p>
+           </div>
         </div>
       )}
 
-      {loading && <Spinner text="Mengupload dan memproses dokumen..." />}
-
       {result && (
-        <div className="ingest-result">
-          <div className="ingest-result-stat">
-            <div className="ingest-result-label">Source</div>
-            <div className="ingest-result-value">{result.source}</div>
-          </div>
-          <div className="ingest-result-stat">
-            <div className="ingest-result-label">Chunks</div>
-            <div className="ingest-result-value">{result.num_chunks}</div>
-          </div>
-        </div>
+        <Card className="animate-in fade-in-50">
+          <CardHeader>
+             <CardTitle className="text-lg">Ingest Berhasil</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col rounded-lg border p-3 text-center">
+                <span className="text-xs uppercase text-muted-foreground">Source</span>
+                <span className="font-mono text-lg font-bold break-all">{result.source}</span>
+              </div>
+              <div className="flex flex-col rounded-lg border p-3 text-center">
+                <span className="text-xs uppercase text-muted-foreground">Chunks</span>
+                <span className="font-mono text-lg font-bold">{result.num_chunks}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

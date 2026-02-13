@@ -70,7 +70,7 @@ function parseMarkdown(text: string): string {
     }
 
     // Bullet list: * item or - item
-    const bulletMatch = trimmed.match(/^[*\-]\s+(.+)$/);
+    const bulletMatch = trimmed.match(/^[-*]\s+(.+)$/);
     if (bulletMatch) {
       if (!inList || listType !== 'ul') {
         closeList();
