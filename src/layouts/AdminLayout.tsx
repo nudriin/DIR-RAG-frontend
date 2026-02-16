@@ -53,8 +53,13 @@ export default function AdminLayout() {
                 </ScrollArea>
             </aside>
 
-            <main className="flex-1 p-4 md:p-8 lg:p-10">
-                <div className="mx-auto max-w-5xl space-y-8">
+            <main className="relative flex-1 overflow-hidden p-4 md:p-8 lg:p-10">
+                <div className="pointer-events-none absolute inset-0">
+                    <div className="absolute -top-32 -right-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
+                    <div className="absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+                    <div className="absolute inset-0 opacity-[0.15] [background-image:radial-gradient(hsl(var(--primary)/0.4)_1px,transparent_1px)] [background-size:18px_18px]" />
+                </div>
+                <div className="relative mx-auto max-w-5xl space-y-8">
                     <Outlet />
                 </div>
             </main>
