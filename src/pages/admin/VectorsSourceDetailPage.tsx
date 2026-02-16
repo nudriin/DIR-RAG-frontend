@@ -76,7 +76,7 @@ export default function VectorsSourceDetailPage() {
   }, [source]);
 
   return (
-    <div className="space-y-6 h-[calc(100vh-8rem)] flex flex-col">
+    <div className="space-y-6 min-h-0 flex flex-col">
       <div className="flex flex-col gap-2 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" asChild className="h-8 w-8">
@@ -103,7 +103,7 @@ export default function VectorsSourceDetailPage() {
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : (
-        <ScrollArea className="flex-1 rounded-md border p-4">
+        <ScrollArea className="flex-1 min-h-0 rounded-md border p-4">
           <div className="space-y-4">
             {data && data.chunks.length > 0 ? (
               data.chunks.map((chunk, i) => (

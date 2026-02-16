@@ -25,8 +25,8 @@ const navItems = [
 
 export default function AdminLayout() {
     return (
-        <div className="flex min-h-[calc(100vh-64px)] w-full">
-            <aside className="hidden border-r bg-muted/40 md:block md:w-64 lg:w-72">
+        <div className="relative flex min-h-[calc(100vh-64px)] w-full">
+            <aside className="sticky top-16 hidden h-[calc(100vh-64px)] border-r bg-muted/40 md:block md:w-64 lg:w-72">
                 <ScrollArea className="h-full py-6 pr-6 pl-4">
                     <div className="mb-4 px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                         Admin Panel
