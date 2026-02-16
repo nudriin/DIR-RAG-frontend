@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react"
-import { getConversationDetail, getHistory, ApiError } from "../../api/client"
+import {
+    getConversationDetail,
+    getHistory,
+    submitFeedback,
+    ApiError,
+} from "../../api/client"
 import type {
     ConversationDetail,
     ConversationMessage,
@@ -10,6 +15,7 @@ import MarkdownText from "../../components/MarkdownText"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { RefreshCw } from "lucide-react"
 
@@ -28,6 +34,7 @@ export default function HistoryPage() {
 
     const mapMessages = (messages: ConversationMessage[]) =>
         messages.map((m) => ({
+            id: m.id,
             role: m.role,
             content: m.content,
             confidence: m.confidence,
@@ -38,6 +45,18 @@ export default function HistoryPage() {
     const [detailMessages, setDetailMessages] = useState<
         ReturnType<typeof mapMessages>
     >([])
+    const [feedbackState, setFeedbackState] = useState<
+        Record<
+            number,
+            {
+                score: number | null
+                comment: string
+                submitting: boolean
+                success: boolean
+                error: string | null
+            }
+        >
+    >({})
 
     const loadHistory = useCallback(
         async (append: boolean) => {
@@ -70,6 +89,7 @@ export default function HistoryPage() {
             const data = await getConversationDetail(id)
             setDetail(data)
             setDetailMessages(mapMessages(data.messages))
+            setFeedbackState({})
         } catch (err) {
             if (err instanceof ApiError) {
                 setDetailError(`Error ${err.status}: ${err.detail}`)
@@ -78,6 +98,60 @@ export default function HistoryPage() {
             }
         } finally {
             setDetailLoading(false)
+        }
+    }
+
+    const updateFeedback = (
+        messageId: number,
+        patch: Partial<{
+            score: number | null
+            comment: string
+            submitting: boolean
+            success: boolean
+            error: string | null
+        }>,
+    ) => {
+        setFeedbackState((prev) => {
+            const current = prev[messageId] ?? {
+                score: null,
+                comment: "",
+                submitting: false,
+                success: false,
+                error: null,
+            }
+            return {
+                ...prev,
+                [messageId]: {
+                    ...current,
+                    ...patch,
+                },
+            }
+        })
+    }
+
+    const handleSubmitFeedback = async (messageId: number) => {
+        const current = feedbackState[messageId]
+        if (!current?.score) return
+        updateFeedback(messageId, { submitting: true, error: null })
+        try {
+            await submitFeedback({
+                messageId,
+                score: current.score,
+                comment: current.comment.trim() ? current.comment.trim() : null,
+            })
+            updateFeedback(messageId, { submitting: false, success: true })
+        } catch (err) {
+            if (err instanceof ApiError) {
+                updateFeedback(messageId, {
+                    submitting: false,
+                    error: err.detail,
+                })
+            } else {
+                updateFeedback(messageId, {
+                    submitting: false,
+                    error: "Terjadi kesalahan jaringan.",
+                })
+            }
         }
     }
 
@@ -242,6 +316,126 @@ export default function HistoryPage() {
                                                                 }
                                                             </span>
                                                         )}
+                                                    </div>
+                                                )}
+                                                {msg.role === "assistant" && (
+                                                    <div className="mt-3 space-y-2">
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {[
+                                                                1, 2, 3, 4, 5,
+                                                            ].map((score) => {
+                                                                const feedback =
+                                                                    feedbackState[
+                                                                        msg.id
+                                                                    ] ?? {
+                                                                        score: null,
+                                                                        comment:
+                                                                            "",
+                                                                        submitting: false,
+                                                                        success: false,
+                                                                        error: null,
+                                                                    }
+                                                                return (
+                                                                    <Button
+                                                                        key={
+                                                                            score
+                                                                        }
+                                                                        size="sm"
+                                                                        variant={
+                                                                            feedback.score ===
+                                                                            score
+                                                                                ? "default"
+                                                                                : "outline"
+                                                                        }
+                                                                        onClick={() =>
+                                                                            updateFeedback(
+                                                                                msg.id,
+                                                                                {
+                                                                                    score,
+                                                                                    success: false,
+                                                                                },
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        {score}
+                                                                    </Button>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                        <Textarea
+                                                            rows={2}
+                                                            placeholder="Komentar (opsional)"
+                                                            value={
+                                                                feedbackState[
+                                                                    msg.id
+                                                                ]?.comment ?? ""
+                                                            }
+                                                            onChange={(e) =>
+                                                                updateFeedback(
+                                                                    msg.id,
+                                                                    {
+                                                                        comment:
+                                                                            e
+                                                                                .target
+                                                                                .value,
+                                                                        success: false,
+                                                                    },
+                                                                )
+                                                            }
+                                                            className="text-xs"
+                                                            disabled={
+                                                                feedbackState[
+                                                                    msg.id
+                                                                ]?.submitting
+                                                            }
+                                                        />
+                                                        <div className="flex flex-wrap items-center gap-3 text-[10px]">
+                                                            <Button
+                                                                size="sm"
+                                                                onClick={() =>
+                                                                    handleSubmitFeedback(
+                                                                        msg.id,
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    !feedbackState[
+                                                                        msg.id
+                                                                    ]?.score ||
+                                                                    feedbackState[
+                                                                        msg.id
+                                                                    ]
+                                                                        ?.submitting
+                                                                }
+                                                            >
+                                                                {feedbackState[
+                                                                    msg.id
+                                                                ]
+                                                                    ?.submitting ? (
+                                                                    <RefreshCw className="mr-2 h-3 w-3 animate-spin" />
+                                                                ) : null}
+                                                                Kirim Feedback
+                                                            </Button>
+                                                            {feedbackState[
+                                                                msg.id
+                                                            ]?.success && (
+                                                                <span className="text-green-600">
+                                                                    Feedback
+                                                                    tersimpan
+                                                                </span>
+                                                            )}
+                                                            {feedbackState[
+                                                                msg.id
+                                                            ]?.error && (
+                                                                <span className="text-destructive">
+                                                                    {
+                                                                        feedbackState[
+                                                                            msg
+                                                                                .id
+                                                                        ]?.error
+                                                                    }
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>

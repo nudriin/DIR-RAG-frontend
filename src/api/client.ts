@@ -6,6 +6,8 @@ import type {
     DashboardStats,
     EvaluateRequest,
     EvaluateResponse,
+    FeedbackRequest,
+    FeedbackResponse,
     IngestResponse,
     VectorResetResponse,
     VectorDeleteResponse,
@@ -116,6 +118,22 @@ export function getConversationDetail(id: number): Promise<ConversationDetail> {
 
 export function getDashboardStats(): Promise<DashboardStats> {
     return fetchJson<DashboardStats>("/dashboard/stats", { method: "GET" })
+}
+
+export function submitFeedback(params: {
+    messageId: number
+    score: number
+    comment?: string | null
+}): Promise<FeedbackResponse> {
+    const body: FeedbackRequest = {
+        message_id: params.messageId,
+        score: params.score,
+        comment: params.comment ?? null,
+    }
+    return fetchJson<FeedbackResponse>("/feedback", {
+        method: "POST",
+        body: JSON.stringify(body),
+    })
 }
 
 // ─── Evaluate ────────────────────────────────────────────────────────────────

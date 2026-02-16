@@ -98,6 +98,26 @@ export default function DashboardPage() {
                                     {formatDate(stats.last_activity)}
                                 </div>
                             </div>
+                            <div className="rounded-md border px-4 py-3">
+                                <div className="text-xs text-muted-foreground">
+                                    Total Feedback
+                                </div>
+                                <div className="mt-2 text-2xl font-semibold">
+                                    {stats.total_feedback}
+                                </div>
+                            </div>
+                            <div className="rounded-md border px-4 py-3">
+                                <div className="text-xs text-muted-foreground">
+                                    Rata-rata Skor Feedback
+                                </div>
+                                <div className="mt-2 text-2xl font-semibold">
+                                    {stats.avg_feedback_score == null
+                                        ? "Belum ada feedback"
+                                        : `${stats.avg_feedback_score.toFixed(
+                                              1,
+                                          )} / 5`}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </CardContent>

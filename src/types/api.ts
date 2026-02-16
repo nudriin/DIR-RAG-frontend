@@ -108,6 +108,21 @@ export interface DashboardStats {
     total_messages: number
     avg_confidence: number
     last_activity: string
+    total_feedback: number
+    avg_feedback_score: number | null
+}
+
+export interface FeedbackRequest {
+    message_id: number
+    score: number
+    comment?: string | null
+}
+
+export interface FeedbackResponse {
+    id: number
+    message_id: number
+    score: number
+    comment?: string | null
 }
 
 // ─── Evaluate ────────────────────────────────────────────────────────────────
