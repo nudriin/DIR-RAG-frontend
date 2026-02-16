@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import {
+    exportConversation,
     getConversationDetail,
     getHistory,
     submitFeedback,
@@ -28,6 +29,7 @@ export default function HistoryPage() {
     const [detail, setDetail] = useState<ConversationDetail | null>(null)
     const [detailLoading, setDetailLoading] = useState(false)
     const [detailError, setDetailError] = useState<string | null>(null)
+    const [exporting, setExporting] = useState(false)
 
     const formatDate = (value?: string) =>
         value ? new Date(value).toLocaleString("id-ID") : "-"
@@ -155,6 +157,23 @@ export default function HistoryPage() {
         }
     }
 
+    const handleExportConversation = async () => {
+        if (!detail?.id) return
+        setExporting(true)
+        setDetailError(null)
+        try {
+            await exportConversation(detail.id)
+        } catch (err) {
+            if (err instanceof ApiError) {
+                setDetailError(`Error ${err.status}: ${err.detail}`)
+            } else {
+                setDetailError("Terjadi kesalahan jaringan.")
+            }
+        } finally {
+            setExporting(false)
+        }
+    }
+
     useEffect(() => {
         loadHistory(false)
     }, [loadHistory])
@@ -229,7 +248,22 @@ export default function HistoryPage() {
 
             <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm">
                 <CardHeader className="pb-3">
-                    <CardTitle>Detail Percakapan</CardTitle>
+                    <div className="flex items-center justify-between">
+                        <CardTitle>Detail Percakapan</CardTitle>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleExportConversation}
+                            disabled={!detail || exporting}
+                        >
+                            {exporting ? (
+                                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                            )}
+                            Export Percakapan Ini
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {detailError && (

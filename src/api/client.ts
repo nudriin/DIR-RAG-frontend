@@ -81,6 +81,20 @@ async function uploadFile<T>(endpoint: string, file: File): Promise<T> {
     return res.json() as Promise<T>
 }
 
+function downloadJson(data: unknown, filename: string) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+        type: "application/json",
+    })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+}
+
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
 export function postChat(params: {
@@ -134,6 +148,44 @@ export function submitFeedback(params: {
         method: "POST",
         body: JSON.stringify(body),
     })
+}
+
+export async function exportAllConversations(): Promise<void> {
+    const res = await fetch(`${BASE_URL}/export`, { method: "GET" })
+    if (!res.ok) {
+        let detail = res.statusText
+        try {
+            const body = await res.json()
+            detail = body.detail ?? JSON.stringify(body)
+        } catch {
+            /* use statusText */
+        }
+        throw new ApiError(res.status, res.statusText, detail)
+    }
+    const data = await res.json()
+    const date = new Date().toISOString().slice(0, 10)
+    downloadJson(data, `conversation_export_all_${date}.json`)
+}
+
+export async function exportConversation(
+    conversationId: number,
+): Promise<void> {
+    const res = await fetch(
+        `${BASE_URL}/export?conversation_id=${conversationId}`,
+        { method: "GET" },
+    )
+    if (!res.ok) {
+        let detail = res.statusText
+        try {
+            const body = await res.json()
+            detail = body.detail ?? JSON.stringify(body)
+        } catch {
+            /* use statusText */
+        }
+        throw new ApiError(res.status, res.statusText, detail)
+    }
+    const data = await res.json()
+    downloadJson(data, `conversation_export_${conversationId}.json`)
 }
 
 // ─── Evaluate ────────────────────────────────────────────────────────────────

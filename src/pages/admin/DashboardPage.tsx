@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react"
-import { getDashboardStats, ApiError } from "../../api/client"
+import {
+    exportAllConversations,
+    getDashboardStats,
+    ApiError,
+} from "../../api/client"
 import type { DashboardStats } from "../../types/api"
 import ErrorMessage from "../../components/ErrorMessage"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +14,7 @@ export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [exporting, setExporting] = useState(false)
 
     const formatDate = (value?: string) =>
         value ? new Date(value).toLocaleString("id-ID") : "-"
@@ -31,6 +36,22 @@ export default function DashboardPage() {
         }
     }
 
+    const handleExportAll = async () => {
+        setExporting(true)
+        setError(null)
+        try {
+            await exportAllConversations()
+        } catch (err) {
+            if (err instanceof ApiError) {
+                setError(`Error ${err.status}: ${err.detail}`)
+            } else {
+                setError("Terjadi kesalahan jaringan.")
+            }
+        } finally {
+            setExporting(false)
+        }
+    }
+
     useEffect(() => {
         loadStats()
     }, [])
@@ -41,15 +62,30 @@ export default function DashboardPage() {
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                         <CardTitle>Dashboard Statistik</CardTitle>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={loadStats}
-                            disabled={loading}
-                        >
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Refresh
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleExportAll}
+                                disabled={exporting}
+                            >
+                                {exporting ? (
+                                    <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                                ) : (
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                )}
+                                Export All (JSON)
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={loadStats}
+                                disabled={loading}
+                            >
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Refresh
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
