@@ -112,6 +112,49 @@ export interface DashboardStats {
     avg_feedback_score: number | null
 }
 
+export interface AuthUser {
+    username: string
+    email: string
+    role: "admin" | "super_admin"
+    last_login: string | null
+}
+
+export interface LoginRequest {
+    username: string
+    password: string
+}
+
+export interface LoginResponse {
+    access_token: string
+    refresh_token: string
+    token_type: string
+    user: AuthUser
+}
+
+export interface RefreshRequest {
+    refresh_token: string
+}
+
+export interface RefreshResponse {
+    access_token: string
+    refresh_token: string
+    token_type: string
+    user?: AuthUser
+}
+
+export interface AdminRegisterRequest {
+    email: string
+    username: string
+    password: string
+}
+
+export interface AdminRegisterResponse {
+    username: string
+    email: string
+    role: "admin" | "super_admin"
+    last_login: string | null
+}
+
 export interface FeedbackRequest {
     message_id: number
     score: number

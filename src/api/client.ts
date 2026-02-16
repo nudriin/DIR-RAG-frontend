@@ -1,4 +1,7 @@
 import type {
+    AdminRegisterRequest,
+    AdminRegisterResponse,
+    AuthUser,
     ChatRequest,
     ChatResponse,
     ConversationDetail,
@@ -9,11 +12,16 @@ import type {
     FeedbackRequest,
     FeedbackResponse,
     IngestResponse,
+    LoginRequest,
+    LoginResponse,
+    RefreshRequest,
+    RefreshResponse,
     VectorResetResponse,
     VectorDeleteResponse,
     VectorSourcesResponse,
     VectorSourceDetailResponse,
 } from "../types/api"
+import { clearAuth, loadAuth, saveAuth } from "../auth/storage"
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL as string
 
@@ -60,24 +68,24 @@ async function fetchJson<T>(
     return res.json() as Promise<T>
 }
 
-async function uploadFile<T>(endpoint: string, file: File): Promise<T> {
-    const url = `${BASE_URL}${endpoint}`
+async function fetchAuthJson<T>(
+    endpoint: string,
+    options: RequestInit = {},
+): Promise<T> {
+    const res = await authorizedFetch(endpoint, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    })
+    return res.json() as Promise<T>
+}
+
+async function uploadAuthFile<T>(endpoint: string, file: File): Promise<T> {
     const form = new FormData()
     form.append("file", file)
-
-    const res = await fetch(url, { method: "POST", body: form })
-
-    if (!res.ok) {
-        let detail = res.statusText
-        try {
-            const body = await res.json()
-            detail = body.detail ?? JSON.stringify(body)
-        } catch {
-            /* use statusText */
-        }
-        throw new ApiError(res.status, res.statusText, detail)
-    }
-
+    const res = await authorizedFetch(endpoint, { method: "POST", body: form })
     return res.json() as Promise<T>
 }
 
@@ -120,6 +128,73 @@ async function fetchNoContent(
     }
 }
 
+async function parseErrorDetail(res: Response) {
+    let detail = res.statusText
+    try {
+        const body = await res.json()
+        detail = body.detail ?? JSON.stringify(body)
+    } catch {
+        detail = res.statusText
+    }
+    return detail
+}
+
+async function authorizedFetch(
+    endpoint: string,
+    options: RequestInit = {},
+    allowRefresh = true,
+): Promise<Response> {
+    const url = `${BASE_URL}${endpoint}`
+    const { accessToken, refreshToken, user } = loadAuth()
+    const headers = new Headers(options.headers)
+    if (accessToken) {
+        headers.set("Authorization", `Bearer ${accessToken}`)
+    }
+    const res = await fetch(url, { ...options, headers })
+    if (res.status === 401 && allowRefresh) {
+        if (!refreshToken) {
+            clearAuth()
+            window.dispatchEvent(
+                new CustomEvent("auth:expired", {
+                    detail: { message: "Sesi berakhir, silakan login lagi" },
+                }),
+            )
+            const detail = await parseErrorDetail(res)
+            throw new ApiError(res.status, res.statusText, detail)
+        }
+        try {
+            const refreshed = await postRefresh({
+                refresh_token: refreshToken,
+            })
+            const nextUser: AuthUser | null = refreshed.user ?? user ?? null
+            saveAuth({
+                accessToken: refreshed.access_token,
+                refreshToken: refreshed.refresh_token,
+                user: nextUser,
+            })
+            window.dispatchEvent(new Event("auth:updated"))
+            return authorizedFetch(endpoint, options, false)
+        } catch (err) {
+            clearAuth()
+            window.dispatchEvent(
+                new CustomEvent("auth:expired", {
+                    detail: { message: "Sesi berakhir, silakan login lagi" },
+                }),
+            )
+            if (err instanceof ApiError) {
+                throw err
+            }
+            const detail = await parseErrorDetail(res)
+            throw new ApiError(res.status, res.statusText, detail)
+        }
+    }
+    if (!res.ok) {
+        const detail = await parseErrorDetail(res)
+        throw new ApiError(res.status, res.statusText, detail)
+    }
+    return res
+}
+
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
 export function postChat(params: {
@@ -156,7 +231,7 @@ export function getConversationDetail(id: number): Promise<ConversationDetail> {
 }
 
 export function getDashboardStats(): Promise<DashboardStats> {
-    return fetchJson<DashboardStats>("/dashboard/stats", { method: "GET" })
+    return fetchAuthJson<DashboardStats>("/dashboard/stats", { method: "GET" })
 }
 
 export function submitFeedback(params: {
@@ -224,7 +299,7 @@ export async function exportConversation(
 // ─── Evaluate ────────────────────────────────────────────────────────────────
 
 export function postEvaluate(data: EvaluateRequest): Promise<EvaluateResponse> {
-    return fetchJson<EvaluateResponse>("/evaluate", {
+    return fetchAuthJson<EvaluateResponse>("/evaluate", {
         method: "POST",
         body: JSON.stringify(data),
     })
@@ -233,7 +308,30 @@ export function postEvaluate(data: EvaluateRequest): Promise<EvaluateResponse> {
 // ─── Ingest ──────────────────────────────────────────────────────────────────
 
 export function postIngest(file: File): Promise<IngestResponse> {
-    return uploadFile<IngestResponse>("/ingest", file)
+    return uploadAuthFile<IngestResponse>("/ingest", file)
+}
+
+export function postLogin(data: LoginRequest): Promise<LoginResponse> {
+    return fetchJson<LoginResponse>("/login", {
+        method: "POST",
+        body: JSON.stringify(data),
+    })
+}
+
+export function postRefresh(data: RefreshRequest): Promise<RefreshResponse> {
+    return fetchJson<RefreshResponse>("/refresh", {
+        method: "POST",
+        body: JSON.stringify(data),
+    })
+}
+
+export function postAdminRegister(
+    data: AdminRegisterRequest,
+): Promise<AdminRegisterResponse> {
+    return fetchAuthJson<AdminRegisterResponse>("/admin/register", {
+        method: "POST",
+        body: JSON.stringify(data),
+    })
 }
 
 // ─── Vectors ─────────────────────────────────────────────────────────────────

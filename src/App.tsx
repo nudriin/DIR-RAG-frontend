@@ -4,6 +4,8 @@ import LandingPage from "./pages/LandingPage"
 import ConversationPage from "./pages/ConversationPage"
 import ChatPage from "./pages/ChatPage"
 import AdminLayout from "./layouts/AdminLayout"
+import AdminLoginPage from "./pages/admin/AdminLoginPage"
+import AdminGuard from "./auth/AdminGuard"
 import DashboardPage from "./pages/admin/DashboardPage"
 import HistoryPage from "./pages/admin/HistoryPage"
 import EvaluatePage from "./pages/admin/EvaluatePage"
@@ -22,7 +24,15 @@ export default function App() {
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/conversation" element={<ConversationPage />} />
                 <Route path="/chat" element={<ChatPage />} />
-                <Route path="/admin" element={<AdminLayout />}>
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route
+                    path="/admin"
+                    element={
+                        <AdminGuard>
+                            <AdminLayout />
+                        </AdminGuard>
+                    }
+                >
                     <Route
                         index
                         element={<Navigate to="dashboard" replace />}

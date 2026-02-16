@@ -6,14 +6,17 @@ import App from "./App.tsx"
 
 import { ThemeProvider } from "./components/ThemeProvider.tsx"
 import { ConversationProvider } from "./context/conversation-context.tsx"
+import { AuthProvider } from "./auth/AuthProvider.tsx"
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <BrowserRouter>
             <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-                <ConversationProvider>
-                    <App />
-                </ConversationProvider>
+                <AuthProvider>
+                    <ConversationProvider>
+                        <App />
+                    </ConversationProvider>
+                </AuthProvider>
             </ThemeProvider>
         </BrowserRouter>
     </StrictMode>,
