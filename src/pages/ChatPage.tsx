@@ -33,7 +33,7 @@ export default function ChatPage() {
         dragin: true,
         generation: true,
         final_status: true,
-        log: true,
+        log: false,
     })
     const filteredThinkingEvents = useMemo(
         () =>
@@ -248,25 +248,35 @@ export default function ChatPage() {
                                 </span>
                             </div>
                             <div className="px-4 py-3">
-                                <div className="grid grid-cols-1 gap-2 text-xs">
+                                <div className="grid grid-cols-1 gap-3 text-xs">
                                     {Object.keys(filters).map((k) => (
                                         <label
                                             key={k}
-                                            className="flex items-center gap-2"
+                                            className="flex items-center justify-between gap-3"
                                         >
-                                            <input
-                                                type="checkbox"
-                                                checked={filters[k as RAGStage]}
-                                                onChange={(e) =>
-                                                    setFilters({
-                                                        ...filters,
-                                                        [k]: e.target.checked,
-                                                    })
-                                                }
-                                            />
                                             <span className="capitalize">
                                                 {k.replace("_", " ")}
                                             </span>
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={
+                                                    filters[k as RAGStage]
+                                                }
+                                                onClick={() =>
+                                                    setFilters({
+                                                        ...filters,
+                                                        [k]: !filters[
+                                                            k as RAGStage
+                                                        ],
+                                                    })
+                                                }
+                                                className={`relative inline-flex h-5 w-9 items-center rounded-full border transition-colors ${filters[k as RAGStage] ? "bg-primary border-primary" : "bg-muted border-border"}`}
+                                            >
+                                                <span
+                                                    className={`inline-block h-4 w-4 transform rounded-full bg-background shadow transition-transform ${filters[k as RAGStage] ? "translate-x-4" : "translate-x-0.5"}`}
+                                                />
+                                            </button>
                                         </label>
                                     ))}
                                 </div>
