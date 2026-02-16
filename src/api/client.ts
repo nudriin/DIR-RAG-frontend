@@ -241,7 +241,7 @@ export function submitFeedback(params: {
 }
 
 export async function exportAllConversations(): Promise<void> {
-    const res = await fetch(`${BASE_URL}/export`, { method: "GET" })
+    const res = await authorizedFetch("/export", { method: "GET" })
     if (!res.ok) {
         let detail = res.statusText
         try {
@@ -268,8 +268,8 @@ export function deleteAllHistory(): Promise<void> {
 export async function exportConversation(
     conversationId: number,
 ): Promise<void> {
-    const res = await fetch(
-        `${BASE_URL}/export?conversation_id=${conversationId}`,
+    const res = await authorizedFetch(
+        `/export?conversation_id=${conversationId}`,
         { method: "GET" },
     )
     if (!res.ok) {
