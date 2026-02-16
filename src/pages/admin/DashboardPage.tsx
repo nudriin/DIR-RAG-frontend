@@ -130,14 +130,15 @@ export default function DashboardPage() {
         <div className="space-y-6">
             <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm">
                 <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <CardTitle>Dashboard Statistik</CardTitle>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                             <Button
                                 size="sm"
                                 variant="outline"
                                 onClick={handleExportAll}
                                 disabled={exporting}
+                                className="w-full sm:w-auto"
                             >
                                 {exporting ? (
                                     <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
@@ -151,6 +152,7 @@ export default function DashboardPage() {
                                 variant="outline"
                                 onClick={loadStats}
                                 disabled={loading}
+                                className="w-full sm:w-auto"
                             >
                                 <RefreshCw className="mr-2 h-4 w-4" />
                                 Refresh

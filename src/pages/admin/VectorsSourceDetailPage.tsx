@@ -88,10 +88,16 @@ export default function VectorsSourceDetailPage() {
         </div>
         
         {source && (
-           <div className="flex items-center gap-2 text-muted-foreground ml-10">
+           <div className="ml-0 flex flex-wrap items-center gap-2 text-muted-foreground sm:ml-10">
              <FileText className="h-4 w-4" />
-             <code className="rounded bg-muted px-1 py-0.5 font-mono text-sm">{source}</code>
-             {data && <span className="text-sm border-l pl-2 ml-2">{data.num_chunks} chunks</span>}
+             <code className="break-all rounded bg-muted px-1 py-0.5 font-mono text-xs sm:text-sm">
+               {source}
+             </code>
+             {data && (
+               <span className="text-xs sm:text-sm border-l pl-2 ml-2 whitespace-nowrap">
+                 {data.num_chunks} chunks
+               </span>
+             )}
            </div>
         )}
       </div>
