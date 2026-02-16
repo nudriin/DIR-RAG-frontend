@@ -14,12 +14,15 @@ import { Loader2, Send, AlertTriangle, Lightbulb, Bug } from "lucide-react"
 import InlineThinking from "@/components/InlineThinking"
 import useThinkingStream from "@/hooks/useThinkingStream"
 import type { RAGStage } from "@/api/logsStream"
+import { useConversation } from "@/context/conversation-store"
 
 export default function ChatPage() {
     const [query, setQuery] = useState("")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [result, setResult] = useState<ChatResponse | null>(null)
+    const { activeConversationId, setActiveConversationId, resetConversation } =
+        useConversation()
     const {
         events: thinkingEvents,
         isThinking,
@@ -56,8 +59,29 @@ export default function ChatPage() {
         await startListening()
 
         try {
-            const data = await postChat(trimmed)
-            setResult(data)
+            let data: ChatResponse | null = null
+            try {
+                data = await postChat({
+                    query: trimmed,
+                    conversationId: activeConversationId,
+                })
+            } catch (err) {
+                if (
+                    err instanceof ApiError &&
+                    err.status === 404 &&
+                    activeConversationId != null
+                ) {
+                    setError("Percakapan tidak ditemukan, memulai baru")
+                    resetConversation()
+                    data = await postChat({ query: trimmed })
+                } else {
+                    throw err
+                }
+            }
+            if (data) {
+                setResult(data)
+                setActiveConversationId(data.conversation_id)
+            }
         } catch (err) {
             if (err instanceof ApiError) {
                 setError(`Error ${err.status}: ${err.detail}`)

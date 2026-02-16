@@ -5,12 +5,15 @@ import "./index.css"
 import App from "./App.tsx"
 
 import { ThemeProvider } from "./components/ThemeProvider.tsx"
+import { ConversationProvider } from "./context/conversation-context.tsx"
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <BrowserRouter>
             <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-                <App />
+                <ConversationProvider>
+                    <App />
+                </ConversationProvider>
             </ThemeProvider>
         </BrowserRouter>
     </StrictMode>,
