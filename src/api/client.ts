@@ -103,29 +103,17 @@ function downloadJson(data: unknown, filename: string) {
     URL.revokeObjectURL(url)
 }
 
-async function fetchNoContent(
+async function fetchAuthNoContent(
     endpoint: string,
     options: RequestInit = {},
 ): Promise<void> {
-    const url = `${BASE_URL}${endpoint}`
-    const res = await fetch(url, {
+    await authorizedFetch(endpoint, {
         ...options,
         headers: {
             "Content-Type": "application/json",
             ...options.headers,
         },
     })
-
-    if (!res.ok) {
-        let detail = res.statusText
-        try {
-            const body = await res.json()
-            detail = body.detail ?? JSON.stringify(body)
-        } catch {
-            /* use statusText */
-        }
-        throw new ApiError(res.status, res.statusText, detail)
-    }
 }
 
 async function parseErrorDetail(res: Response) {
@@ -221,13 +209,15 @@ export function getHistory(params: {
         offset: String(params.offset),
         limit: String(params.limit),
     })
-    return fetchJson<ConversationSummary[]>(`/history?${query}`, {
+    return fetchAuthJson<ConversationSummary[]>(`/history?${query}`, {
         method: "GET",
     })
 }
 
 export function getConversationDetail(id: number): Promise<ConversationDetail> {
-    return fetchJson<ConversationDetail>(`/history/${id}`, { method: "GET" })
+    return fetchAuthJson<ConversationDetail>(`/history/${id}`, {
+        method: "GET",
+    })
 }
 
 export function getDashboardStats(): Promise<DashboardStats> {
@@ -268,11 +258,11 @@ export async function exportAllConversations(): Promise<void> {
 }
 
 export function deleteConversationHistory(id: number): Promise<void> {
-    return fetchNoContent(`/history/${id}`, { method: "DELETE" })
+    return fetchAuthNoContent(`/history/${id}`, { method: "DELETE" })
 }
 
 export function deleteAllHistory(): Promise<void> {
-    return fetchNoContent("/history", { method: "DELETE" })
+    return fetchAuthNoContent("/history", { method: "DELETE" })
 }
 
 export async function exportConversation(
@@ -337,20 +327,22 @@ export function postAdminRegister(
 // ─── Vectors ─────────────────────────────────────────────────────────────────
 
 export function postVectorsReset(): Promise<VectorResetResponse> {
-    return fetchJson<VectorResetResponse>("/vectors/reset", { method: "POST" })
+    return fetchAuthJson<VectorResetResponse>("/vectors/reset", {
+        method: "POST",
+    })
 }
 
 export function postVectorsDeleteBySource(
     source: string,
 ): Promise<VectorDeleteResponse> {
-    return fetchJson<VectorDeleteResponse>("/vectors/delete-by-source", {
+    return fetchAuthJson<VectorDeleteResponse>("/vectors/delete-by-source", {
         method: "POST",
         body: JSON.stringify({ source }),
     })
 }
 
 export function getVectorsSources(): Promise<VectorSourcesResponse> {
-    return fetchJson<VectorSourcesResponse>("/vectors/sources", {
+    return fetchAuthJson<VectorSourcesResponse>("/vectors/sources", {
         method: "GET",
     })
 }
@@ -358,7 +350,7 @@ export function getVectorsSources(): Promise<VectorSourcesResponse> {
 export function getVectorsSourceDetail(
     source: string,
 ): Promise<VectorSourceDetailResponse> {
-    return fetchJson<VectorSourceDetailResponse>(
+    return fetchAuthJson<VectorSourceDetailResponse>(
         `/vectors/source-detail?source=${encodeURIComponent(source)}`,
         { method: "GET" },
     )
