@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Send, Bot, User, Loader2 } from "lucide-react"
+import { Send, Bot, User } from "lucide-react"
 import { postChat, ApiError } from "../api/client"
 import type { ChatResponse } from "../types/api"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import MarkdownText from "../components/MarkdownText"
 import { cn } from "@/lib/utils"
+import InlineThinking from "@/components/InlineThinking"
+import useThinkingStream from "@/hooks/useThinkingStream"
 
 interface Message {
     role: "user" | "assistant"
@@ -21,6 +23,12 @@ export default function ConversationPage() {
     const [query, setQuery] = useState("")
     const [loading, setLoading] = useState(false)
     const scrollRef = useRef<HTMLDivElement>(null)
+    const {
+        events: thinkingEvents,
+        isThinking,
+        startListening,
+        reset,
+    } = useThinkingStream()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -30,6 +38,8 @@ export default function ConversationPage() {
         setQuery("")
         setMessages((prev) => [...prev, { role: "user", content: userMessage }])
         setLoading(true)
+        reset()
+        await startListening()
 
         try {
             const data: ChatResponse = await postChat(userMessage)
@@ -119,6 +129,20 @@ export default function ConversationPage() {
                                         </div>
                                     ) : (
                                         <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed">
+                                            {idx === messages.length - 1 &&
+                                                thinkingEvents.length > 0 &&
+                                                !msg.isError && (
+                                                    <div className="mb-3">
+                                                        <InlineThinking
+                                                            events={
+                                                                thinkingEvents
+                                                            }
+                                                            isThinking={
+                                                                isThinking
+                                                            }
+                                                        />
+                                                    </div>
+                                                )}
                                             <MarkdownText
                                                 content={msg.content}
                                             />
@@ -145,10 +169,10 @@ export default function ConversationPage() {
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="bg-muted/50 border border-border rounded-2xl rounded-tl-sm px-4 py-4 max-w-[80%] flex items-center gap-2">
-                                    <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-                                    <span className="text-muted-foreground text-xs font-medium">
-                                        Thinking...
-                                    </span>
+                                    <InlineThinking
+                                        events={thinkingEvents}
+                                        isThinking={isThinking}
+                                    />
                                 </div>
                             </div>
                         )}

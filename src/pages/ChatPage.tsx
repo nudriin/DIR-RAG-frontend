@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { postChat, ApiError } from "../api/client"
 import type { ChatResponse } from "../types/api"
 import ErrorMessage from "../components/ErrorMessage"
@@ -10,13 +10,36 @@ import MarkdownText from "../components/MarkdownText"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Send, AlertTriangle, Lightbulb, Bug } from "lucide-react"
+import {
+    Loader2,
+    Send,
+    AlertTriangle,
+    Lightbulb,
+    Bug,
+    Sparkles,
+} from "lucide-react"
+import ThinkingTimeline from "@/components/ThinkingTimeline"
+import { LogsStreamClient, type RAGEvent } from "@/api/logsStream"
 
 export default function ChatPage() {
     const [query, setQuery] = useState("")
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [result, setResult] = useState<ChatResponse | null>(null)
+    const [events, setEvents] = useState<RAGEvent[]>([])
+    const [filters, setFilters] = useState<Record<string, boolean>>({
+        rq_rag: true,
+        retrieval: true,
+        reranker: true,
+        dragin: true,
+        generation: true,
+        final_status: true,
+        log: true,
+    })
+    const [streaming, setStreaming] = useState(false)
+    const [streamError, setStreamError] = useState<string | null>(null)
+    const [connected, setConnected] = useState(false)
+    const clientRef = useRef<LogsStreamClient | null>(null)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -47,6 +70,69 @@ export default function ChatPage() {
 
     const confidence = result?.confidence
     const iterations = result?.iterations
+
+    useEffect(() => {
+        if (events.some((e) => e.stage === "final_status")) {
+            stopStream()
+        }
+    }, [events])
+
+    function startStream() {
+        if (streaming) return
+        setEvents([])
+        setStreamError(null)
+        const client = new LogsStreamClient()
+        clientRef.current = client
+        client.connect(
+            (e) => {
+                setConnected(true)
+                setEvents((prev) => {
+                    const next = [...prev, e]
+                    if (next.length > 500) next.shift()
+                    return next
+                })
+            },
+            () => {
+                setConnected(false)
+                setStreamError("Stream terputus, mencoba menghubungkan ulang…")
+            },
+        )
+        setStreaming(true)
+    }
+
+    function stopStream() {
+        clientRef.current?.close()
+        clientRef.current = null
+        setStreaming(false)
+        setStreamError(null)
+        setConnected(false)
+    }
+
+    useEffect(() => {
+        if (clientRef.current) return
+        setEvents([])
+        setStreamError(null)
+        const client = new LogsStreamClient()
+        clientRef.current = client
+        client.connect(
+            (e) => {
+                setConnected(true)
+                setEvents((prev) => {
+                    const next = [...prev, e]
+                    if (next.length > 500) next.shift()
+                    return next
+                })
+            },
+            () => {
+                setConnected(false)
+                setStreamError("Stream terputus, mencoba menghubungkan ulang…")
+            },
+        )
+        setStreaming(true)
+        return () => {
+            clientRef.current?.close()
+        }
+    }, [])
 
     return (
         <div className="flex min-h-[calc(100vh-4rem)] flex-col">
@@ -80,7 +166,7 @@ export default function ChatPage() {
                 </div>
             </div>
 
-            <div className="container mx-auto max-w-3xl flex-1 p-4 sm:p-6">
+            <div className="container mx-auto max-w-6xl flex-1 p-4 sm:p-6">
                 {/* Error */}
                 {error && (
                     <ErrorMessage
@@ -182,6 +268,95 @@ export default function ChatPage() {
                         )}
                     </div>
                 )}
+                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div />
+                    <div className="space-y-3">
+                        <div className="rounded-md border bg-card text-card-foreground shadow-sm">
+                            <div className="flex items-center justify-between border-b bg-muted/20 px-4 py-3">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles className="h-4 w-4 text-primary" />
+                                    <span className="text-sm font-semibold">
+                                        Thinking Timeline
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${connected ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}
+                                    >
+                                        {connected
+                                            ? "Connected"
+                                            : "Disconnected"}
+                                    </span>
+                                    {streaming ? (
+                                        <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={stopStream}
+                                        >
+                                            Stop
+                                        </Button>
+                                    ) : (
+                                        <Button size="sm" onClick={startStream}>
+                                            Start
+                                        </Button>
+                                    )}
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setEvents([])}
+                                    >
+                                        Clear
+                                    </Button>
+                                </div>
+                            </div>
+                            {streamError && (
+                                <div className="px-4 py-2 text-xs text-yellow-700 dark:text-yellow-200">
+                                    {streamError}
+                                </div>
+                            )}
+                            <div className="px-4 py-3">
+                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                    {Object.keys(filters).map((k) => (
+                                        <label
+                                            key={k}
+                                            className="flex items-center gap-2"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    filters[
+                                                        k as keyof typeof filters
+                                                    ]
+                                                }
+                                                onChange={(e) =>
+                                                    setFilters({
+                                                        ...filters,
+                                                        [k]: e.target.checked,
+                                                    })
+                                                }
+                                            />
+                                            <span className="capitalize">
+                                                {k.replace("_", " ")}
+                                            </span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                            <ThinkingTimeline
+                                events={events}
+                                filters={{
+                                    rq_rag: !!filters.rq_rag,
+                                    retrieval: !!filters.retrieval,
+                                    reranker: !!filters.reranker,
+                                    dragin: !!filters.dragin,
+                                    generation: !!filters.generation,
+                                    final_status: !!filters.final_status,
+                                    log: !!filters.log,
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     )
