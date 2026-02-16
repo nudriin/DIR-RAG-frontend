@@ -56,6 +56,16 @@ export default function DashboardPage() {
         loadStats()
     }, [])
 
+    useEffect(() => {
+        const handler = () => {
+            loadStats()
+        }
+        window.addEventListener("history:deleted", handler)
+        return () => {
+            window.removeEventListener("history:deleted", handler)
+        }
+    }, [])
+
     return (
         <div className="space-y-6">
             <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm">

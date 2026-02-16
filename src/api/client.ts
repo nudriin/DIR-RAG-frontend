@@ -95,6 +95,31 @@ function downloadJson(data: unknown, filename: string) {
     URL.revokeObjectURL(url)
 }
 
+async function fetchNoContent(
+    endpoint: string,
+    options: RequestInit = {},
+): Promise<void> {
+    const url = `${BASE_URL}${endpoint}`
+    const res = await fetch(url, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
+    })
+
+    if (!res.ok) {
+        let detail = res.statusText
+        try {
+            const body = await res.json()
+            detail = body.detail ?? JSON.stringify(body)
+        } catch {
+            /* use statusText */
+        }
+        throw new ApiError(res.status, res.statusText, detail)
+    }
+}
+
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
 export function postChat(params: {
@@ -165,6 +190,14 @@ export async function exportAllConversations(): Promise<void> {
     const data = await res.json()
     const date = new Date().toISOString().slice(0, 10)
     downloadJson(data, `conversation_export_all_${date}.json`)
+}
+
+export function deleteConversationHistory(id: number): Promise<void> {
+    return fetchNoContent(`/history/${id}`, { method: "DELETE" })
+}
+
+export function deleteAllHistory(): Promise<void> {
+    return fetchNoContent("/history", { method: "DELETE" })
 }
 
 export async function exportConversation(

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import {
+    deleteAllHistory,
+    deleteConversationHistory,
     exportConversation,
     getConversationDetail,
     getHistory,
@@ -17,8 +19,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useConversation } from "@/context/conversation-store"
 import { cn } from "@/lib/utils"
-import { RefreshCw } from "lucide-react"
+import { Loader2, RefreshCw, Trash2 } from "lucide-react"
 
 export default function HistoryPage() {
     const [items, setItems] = useState<ConversationSummary[]>([])
@@ -30,6 +43,13 @@ export default function HistoryPage() {
     const [detailLoading, setDetailLoading] = useState(false)
     const [detailError, setDetailError] = useState<string | null>(null)
     const [exporting, setExporting] = useState(false)
+    const [deleteOpen, setDeleteOpen] = useState(false)
+    const [deleteTarget, setDeleteTarget] =
+        useState<ConversationSummary | null>(null)
+    const [deleteAllOpen, setDeleteAllOpen] = useState(false)
+    const [deletingId, setDeletingId] = useState<number | null>(null)
+    const [deletingAll, setDeletingAll] = useState(false)
+    const { activeConversationId, resetConversation } = useConversation()
 
     const formatDate = (value?: string) =>
         value ? new Date(value).toLocaleString("id-ID") : "-"
@@ -174,6 +194,67 @@ export default function HistoryPage() {
         }
     }
 
+    const handleDeleteConversation = async () => {
+        if (!deleteTarget) return
+        setDeletingId(deleteTarget.id)
+        setError(null)
+        try {
+            await deleteConversationHistory(deleteTarget.id)
+            setItems((prev) => prev.filter((c) => c.id !== deleteTarget.id))
+            if (detail?.id === deleteTarget.id) {
+                setDetail(null)
+                setDetailMessages([])
+                setFeedbackState({})
+            }
+            if (activeConversationId === deleteTarget.id) {
+                resetConversation()
+            }
+            window.dispatchEvent(new Event("history:deleted"))
+            setDeleteOpen(false)
+            setDeleteTarget(null)
+        } catch (err) {
+            if (err instanceof ApiError) {
+                setError(
+                    err.status === 404
+                        ? "Percakapan sudah tidak ada."
+                        : `Error ${err.status}: ${err.detail}`,
+                )
+                setItems((prev) => prev.filter((c) => c.id !== deleteTarget.id))
+            } else {
+                setError("Terjadi kesalahan jaringan.")
+            }
+        } finally {
+            setDeletingId(null)
+        }
+    }
+
+    const handleDeleteAll = async () => {
+        setDeletingAll(true)
+        setError(null)
+        try {
+            await deleteAllHistory()
+            setItems([])
+            setOffset(0)
+            setHasMore(false)
+            setDetail(null)
+            setDetailMessages([])
+            setFeedbackState({})
+            if (activeConversationId != null) {
+                resetConversation()
+            }
+            window.dispatchEvent(new Event("history:deleted"))
+            setDeleteAllOpen(false)
+        } catch (err) {
+            if (err instanceof ApiError) {
+                setError(`Error ${err.status}: ${err.detail}`)
+            } else {
+                setError("Terjadi kesalahan jaringan.")
+            }
+        } finally {
+            setDeletingAll(false)
+        }
+    }
+
     useEffect(() => {
         loadHistory(false)
     }, [loadHistory])
@@ -182,17 +263,62 @@ export default function HistoryPage() {
         <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
             <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm">
                 <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                         <CardTitle>History</CardTitle>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => loadHistory(false)}
-                            disabled={loading}
-                        >
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Refresh
-                        </Button>
+                        <div className="flex flex-wrap items-center gap-2">
+                            <AlertDialog
+                                open={deleteAllOpen}
+                                onOpenChange={setDeleteAllOpen}
+                            >
+                                <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    onClick={() => setDeleteAllOpen(true)}
+                                    disabled={loading || deletingAll}
+                                    className="shrink-0"
+                                >
+                                    {deletingAll ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                    )}
+                                    Delete All History
+                                </Button>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                            Hapus semua percakapan?
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Yakin ingin menghapus SEMUA
+                                            percakapan? Data percakapan dan
+                                            feedback akan hilang permanen.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                            Batal
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleDeleteAll}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                            Ya, Hapus Semua
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => loadHistory(false)}
+                                disabled={loading}
+                                className="shrink-0"
+                            >
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Refresh
+                            </Button>
+                        </div>
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
@@ -213,19 +339,40 @@ export default function HistoryPage() {
                     ) : (
                         <div className="space-y-2">
                             {items.map((c) => (
-                                <button
+                                <div
                                     key={c.id}
-                                    type="button"
-                                    onClick={() => loadDetail(c.id)}
-                                    className={`w-full rounded-md border px-3 py-2 text-left text-xs transition-colors ${detail?.id === c.id ? "bg-primary/10 border-primary/20 text-primary" : "bg-background hover:bg-accent/50"}`}
+                                    className="flex items-start gap-2"
                                 >
-                                    <div className="font-medium line-clamp-2">
-                                        {c.title}
-                                    </div>
-                                    <div className="mt-1 text-[10px] text-muted-foreground">
-                                        {formatDate(c.created_at)}
-                                    </div>
-                                </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => loadDetail(c.id)}
+                                        className={`w-full rounded-md border px-3 py-2 text-left text-xs transition-colors ${detail?.id === c.id ? "bg-primary/10 border-primary/20 text-primary" : "bg-background hover:bg-accent/50"}`}
+                                    >
+                                        <div className="font-medium line-clamp-2">
+                                            {c.title}
+                                        </div>
+                                        <div className="mt-1 text-[10px] text-muted-foreground">
+                                            {formatDate(c.created_at)}
+                                        </div>
+                                    </button>
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-9 w-9 text-destructive hover:text-destructive"
+                                        onClick={() => {
+                                            setDeleteTarget(c)
+                                            setDeleteOpen(true)
+                                        }}
+                                        disabled={deletingId === c.id}
+                                    >
+                                        {deletingId === c.id ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Trash2 className="h-4 w-4" />
+                                        )}
+                                    </Button>
+                                </div>
                             ))}
                         </div>
                     )}
@@ -245,6 +392,29 @@ export default function HistoryPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Hapus percakapan ini?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Yakin ingin menghapus percakapan ini? Tindakan ini
+                            tidak bisa dibatalkan.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDeleteConversation}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            Hapus
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             <Card className="border-border/50 shadow-sm bg-background/50 backdrop-blur-sm">
                 <CardHeader className="pb-3">
