@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/auth/useAuth"
 import { isValidUsername, validatePassword } from "@/utils/auth"
-import { Loader2, RefreshCw, UserPlus } from "lucide-react"
+import { Eye, EyeOff, Loader2, RefreshCw, UserPlus } from "lucide-react"
 
 export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -23,6 +23,7 @@ export default function DashboardPage() {
     const [registerEmail, setRegisterEmail] = useState("")
     const [registerUsername, setRegisterUsername] = useState("")
     const [registerPassword, setRegisterPassword] = useState("")
+    const [showRegisterPassword, setShowRegisterPassword] = useState(false)
     const [registerLoading, setRegisterLoading] = useState(false)
     const [registerSuccess, setRegisterSuccess] = useState<string | null>(null)
     const [registerError, setRegisterError] = useState<string | null>(null)
@@ -290,18 +291,45 @@ export default function DashboardPage() {
                                     <Label htmlFor="admin-password">
                                         Password
                                     </Label>
-                                    <Input
-                                        id="admin-password"
-                                        type="password"
-                                        value={registerPassword}
-                                        onChange={(event) =>
-                                            setRegisterPassword(
-                                                event.target.value,
-                                            )
-                                        }
-                                        placeholder="StrongPass1!"
-                                        disabled={registerLoading}
-                                    />
+                                    <div className="relative">
+                                        <Input
+                                            id="admin-password"
+                                            type={
+                                                showRegisterPassword
+                                                    ? "text"
+                                                    : "password"
+                                            }
+                                            value={registerPassword}
+                                            onChange={(event) =>
+                                                setRegisterPassword(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="StrongPass1!"
+                                            disabled={registerLoading}
+                                            className="pr-10"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setShowRegisterPassword(
+                                                    (prev) => !prev,
+                                                )
+                                            }
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                            aria-label={
+                                                showRegisterPassword
+                                                    ? "Sembunyikan password"
+                                                    : "Tampilkan password"
+                                            }
+                                        >
+                                            {showRegisterPassword ? (
+                                                <EyeOff className="h-4 w-4" />
+                                            ) : (
+                                                <Eye className="h-4 w-4" />
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="sm:col-span-2 flex justify-end">
                                     <Button

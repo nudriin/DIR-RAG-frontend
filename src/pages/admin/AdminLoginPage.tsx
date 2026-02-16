@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Loader2, Lock } from "lucide-react"
+import { Eye, EyeOff, Loader2, Lock } from "lucide-react"
 import { useAuth } from "@/auth/useAuth"
 import { isValidUsername, validatePassword } from "@/utils/auth"
 
@@ -15,6 +15,7 @@ export default function AdminLoginPage() {
     const { isAuthenticated, login, authMessage, clearMessage } = useAuth()
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
+    const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -109,17 +110,38 @@ export default function AdminLoginPage() {
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="password">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={password}
-                                onChange={(event) =>
-                                    setPassword(event.target.value)
-                                }
-                                placeholder="Masukkan password"
-                                autoComplete="current-password"
-                                disabled={loading}
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(event) =>
+                                        setPassword(event.target.value)
+                                    }
+                                    placeholder="Masukkan password"
+                                    autoComplete="current-password"
+                                    disabled={loading}
+                                    className="pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setShowPassword((prev) => !prev)
+                                    }
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    aria-label={
+                                        showPassword
+                                            ? "Sembunyikan password"
+                                            : "Tampilkan password"
+                                    }
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                         <Button
                             type="submit"
