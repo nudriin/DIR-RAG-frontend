@@ -4,6 +4,8 @@ import LandingPage from './pages/LandingPage';
 import ConversationPage from './pages/ConversationPage';
 import ChatPage from './pages/ChatPage';
 import AdminLayout from './layouts/AdminLayout';
+import DashboardPage from './pages/admin/DashboardPage';
+import HistoryPage from './pages/admin/HistoryPage';
 import EvaluatePage from './pages/admin/EvaluatePage';
 import IngestPage from './pages/admin/IngestPage';
 import VectorsResetPage from './pages/admin/VectorsResetPage';
@@ -22,7 +24,9 @@ export default function App() {
         <Route path="/conversation" element={<ConversationPage />} />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<Navigate to="evaluate" replace />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="history" element={<HistoryPage />} />
           <Route path="evaluate" element={<EvaluatePage />} />
           <Route path="ingest" element={<IngestPage />} />
           <Route path="vectors/reset" element={<VectorsResetPage />} />

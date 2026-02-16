@@ -1,9 +1,11 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { BarChart, Upload, Database, RotateCcw, Trash2 } from 'lucide-react';
+import { BarChart, Upload, Database, RotateCcw, Trash2, Clock, LayoutDashboard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const navItems = [
+  { to: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/admin/history', icon: Clock, label: 'History' },
   { to: '/admin/evaluate', icon: BarChart, label: 'Evaluate' },
   { to: '/admin/ingest', icon: Upload, label: 'Ingest' },
   { to: '/admin/vectors/sources', icon: Database, label: 'Sources' },
