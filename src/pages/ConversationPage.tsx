@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Send, Bot, User } from "lucide-react"
 import { postChat, ApiError } from "../api/client"
-import type { ChatResponse } from "../types/api"
+import type { ChatResponse, Role } from "../types/api"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils"
 import InlineThinking from "@/components/InlineThinking"
 import useThinkingStream from "@/hooks/useThinkingStream"
 import { useConversation } from "@/context/conversation-store"
+import { ROLE_CHIPS, roleValueToLabel } from "@/utils/roles"
 
 interface Message {
     role: "user" | "assistant"
@@ -28,6 +29,8 @@ export default function ConversationPage() {
     const [query, setQuery] = useState("")
     const [loading, setLoading] = useState(false)
     const [chatError, setChatError] = useState<string | null>(null)
+    const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+
     const scrollRef = useRef<HTMLDivElement>(null)
     const {
         events: thinkingEvents,
@@ -45,7 +48,7 @@ export default function ConversationPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!query.trim() || loading) return
+        if (!query.trim() || loading || !selectedRole) return
 
         const userMessage = query.trim()
         setQuery("")
@@ -69,6 +72,8 @@ export default function ConversationPage() {
                 data = await postChat({
                     query: userMessage,
                     conversationId: previousConversationId,
+                    userRole: selectedRole,
+                    targetRole: null,
                 })
             } catch (err) {
                 if (
@@ -78,7 +83,11 @@ export default function ConversationPage() {
                 ) {
                     setChatError("Percakapan tidak ditemukan, memulai baru")
                     resetConversation()
-                    data = await postChat({ query: userMessage })
+                    data = await postChat({
+                        query: userMessage,
+                        userRole: selectedRole,
+                        targetRole: null,
+                    })
                 } else {
                     throw err
                 }
@@ -130,6 +139,13 @@ export default function ConversationPage() {
                 />
             )}
             <Card className="flex-1 flex flex-col overflow-hidden border-border/50 shadow-sm bg-background/50 backdrop-blur-sm">
+                {selectedRole && (
+                    <div className="flex justify-end px-4 py-2 border-b bg-muted/20">
+                        <div className="rounded-full bg-background border px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                            Peran: <span className="text-primary">{roleValueToLabel(selectedRole)}</span>
+                        </div>
+                    </div>
+                )}
                 <ScrollArea className="min-h-0 flex-1 p-4" ref={scrollRef}>
                     <div className="space-y-6 pb-4">
                         {messages.length === 0 && (
@@ -144,6 +160,48 @@ export default function ConversationPage() {
                                     Silakan ajukan pertanyaan seputar Kelas
                                     Digital Huma Betang.
                                 </p>
+                                <div className="mt-4 flex flex-col items-center gap-2">
+                                    <div className="mx-auto grid grid-cols-2 gap-2 sm:grid-cols-6 max-w-md sm:max-w-xl">
+                                        {ROLE_CHIPS.map((opt, i) => {
+                                            const active =
+                                                selectedRole === opt.value
+                                            const pos =
+                                                i === 0
+                                                    ? "sm:col-span-2 sm:col-start-1"
+                                                    : i === 1
+                                                      ? "sm:col-span-2 sm:col-start-3"
+                                                      : i === 2
+                                                        ? "sm:col-span-2 sm:col-start-5"
+                                                        : i === 3
+                                                          ? "sm:col-span-2 sm:col-start-2"
+                                                          : "sm:col-span-2 sm:col-start-4"
+                                            return (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() =>
+                                                        setSelectedRole(
+                                                            opt.value,
+                                                        )
+                                                    }
+                                                    className={`w-full text-center rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:border-primary hover:shadow-sm ${
+                                                        active
+                                                            ? "border-primary bg-primary/10 text-primary shadow-sm"
+                                                            : "border-border bg-background text-foreground"
+                                                    } ${pos}`}
+                                                    aria-pressed={active}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                    {!selectedRole && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Pilih peran Anda terlebih dahulu.
+                                        </p>
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -265,15 +323,16 @@ export default function ConversationPage() {
                             placeholder="Ketik pesan Anda..."
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
-                            disabled={loading}
+                            disabled={loading || !selectedRole}
                             className="pr-12 py-3 text-base shadow-sm resize-y min-h-20"
                             rows={3}
                             autoFocus
                         />
+
                         <Button
                             type="submit"
                             size="icon"
-                            disabled={loading || !query.trim()}
+                            disabled={loading || !query.trim() || !selectedRole}
                             className="absolute right-1 bottom-1 h-10 w-10 bg-primary hover:bg-primary/90 transition-colors"
                         >
                             <Send className="w-4 h-4" />
