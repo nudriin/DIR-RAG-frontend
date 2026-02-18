@@ -5,7 +5,13 @@
 
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
-export type Role = "siswa" | "pengajar" | "admin_sekolah" | "pengawas" | "dinas"
+export type Role =
+    | "siswa"
+    | "pengajar"
+    | "admin_sekolah"
+    | "pengawas"
+    | "dinas"
+    | "umum"
 
 export interface ChatRequest {
     query: string
@@ -16,8 +22,6 @@ export interface ChatRequest {
 
 export interface Source {
     id: number
-    source?: string
-    chunk_id?: string
 }
 
 export interface TraceEntry {
@@ -89,7 +93,6 @@ export interface ChatResponse {
 export interface ConversationSummary {
     id: number
     title: string
-    created_at: string
 }
 
 export interface ConversationMessage {

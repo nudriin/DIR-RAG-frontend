@@ -28,8 +28,8 @@ export default function ConversationPage() {
     const [messages, setMessages] = useState<Message[]>([])
     const [query, setQuery] = useState("")
     const [loading, setLoading] = useState(false)
-    const [chatError, setChatError] = useState<string | null>(null)
     const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+    const [chatError, setChatError] = useState<string | null>(null)
 
     const scrollRef = useRef<HTMLDivElement>(null)
     const {
@@ -40,6 +40,7 @@ export default function ConversationPage() {
     } = useThinkingStream()
     const { activeConversationId, setActiveConversationId, resetConversation } =
         useConversation()
+
     useEffect(() => {
         return () => {
             resetConversation()
@@ -142,7 +143,10 @@ export default function ConversationPage() {
                 {selectedRole && (
                     <div className="flex justify-end px-4 py-2 border-b bg-muted/20">
                         <div className="rounded-full bg-background border px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                            Peran: <span className="text-primary">{roleValueToLabel(selectedRole)}</span>
+                            Peran:{" "}
+                            <span className="text-primary">
+                                {roleValueToLabel(selectedRole)}
+                            </span>
                         </div>
                     </div>
                 )}
@@ -161,20 +165,10 @@ export default function ConversationPage() {
                                     Digital Huma Betang.
                                 </p>
                                 <div className="mt-4 flex flex-col items-center gap-2">
-                                    <div className="mx-auto grid grid-cols-2 gap-2 sm:grid-cols-6 max-w-md sm:max-w-xl">
-                                        {ROLE_CHIPS.map((opt, i) => {
+                                    <div className="mx-auto grid grid-cols-2 gap-2 sm:grid-cols-3 max-w-md sm:max-w-xl">
+                                        {ROLE_CHIPS.map((opt) => {
                                             const active =
                                                 selectedRole === opt.value
-                                            const pos =
-                                                i === 0
-                                                    ? "sm:col-span-2 sm:col-start-1"
-                                                    : i === 1
-                                                      ? "sm:col-span-2 sm:col-start-3"
-                                                      : i === 2
-                                                        ? "sm:col-span-2 sm:col-start-5"
-                                                        : i === 3
-                                                          ? "sm:col-span-2 sm:col-start-2"
-                                                          : "sm:col-span-2 sm:col-start-4"
                                             return (
                                                 <button
                                                     key={opt.value}
@@ -188,7 +182,7 @@ export default function ConversationPage() {
                                                         active
                                                             ? "border-primary bg-primary/10 text-primary shadow-sm"
                                                             : "border-border bg-background text-foreground"
-                                                    } ${pos}`}
+                                                    }`}
                                                     aria-pressed={active}
                                                 >
                                                     {opt.label}

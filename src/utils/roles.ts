@@ -1,10 +1,6 @@
-export type RoleValue =
-    | ""
-    | "siswa"
-    | "pengajar"
-    | "admin_sekolah"
-    | "pengawas"
-    | "dinas"
+import type { Role } from "../types/api"
+
+export type RoleValue = "" | Role
 
 export const TARGET_ROLE_OPTIONS: Array<{ label: string; value: RoleValue }> = [
     { label: "Otomatis", value: "" },
@@ -13,6 +9,7 @@ export const TARGET_ROLE_OPTIONS: Array<{ label: string; value: RoleValue }> = [
     { label: "Admin Sekolah", value: "admin_sekolah" },
     { label: "Pengawas", value: "pengawas" },
     { label: "Dinas", value: "dinas" },
+    { label: "Umum", value: "umum" },
 ]
 
 export const USER_ROLE_OPTIONS: Array<{ label: string; value: RoleValue }> = [
@@ -22,6 +19,7 @@ export const USER_ROLE_OPTIONS: Array<{ label: string; value: RoleValue }> = [
     { label: "Admin Sekolah", value: "admin_sekolah" },
     { label: "Pengawas", value: "pengawas" },
     { label: "Dinas", value: "dinas" },
+    { label: "Umum", value: "umum" },
 ]
 
 export function roleValueToLabel(value?: string | null) {
@@ -36,6 +34,8 @@ export function roleValueToLabel(value?: string | null) {
             return "Pengawas"
         case "dinas":
             return "Dinas"
+        case "umum":
+            return "Umum"
         default:
             return "Otomatis"
     }
@@ -50,4 +50,5 @@ export const ROLE_CHIPS: Array<{
     { label: "Admin Sekolah", value: "admin_sekolah" },
     { label: "Pengawas", value: "pengawas" },
     { label: "Dinas", value: "dinas" },
+    { label: "Umum", value: "umum" },
 ]
