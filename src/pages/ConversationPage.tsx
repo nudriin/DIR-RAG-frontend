@@ -22,6 +22,7 @@ interface Message {
     confidence?: number | null
     rag_iterations?: number | null
     created_at?: string
+    response_time_ms?: number | null
 }
 
 export default function ConversationPage() {
@@ -104,6 +105,7 @@ export default function ConversationPage() {
                         content: answer,
                         confidence: data.confidence ?? null,
                         rag_iterations: data.iterations ?? null,
+                        response_time_ms: data.response_time_ms ?? null,
                         created_at: new Date().toISOString(),
                     },
                 ])
@@ -254,7 +256,9 @@ export default function ConversationPage() {
                                                 content={msg.content}
                                             />
                                             {(msg.confidence != null ||
-                                                msg.rag_iterations != null) && (
+                                                msg.rag_iterations != null ||
+                                                msg.response_time_ms !=
+                                                    null) && (
                                                 <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
                                                     {msg.confidence != null && (
                                                         <span>
@@ -271,6 +275,17 @@ export default function ConversationPage() {
                                                         <span>
                                                             Iterasi:{" "}
                                                             {msg.rag_iterations}
+                                                        </span>
+                                                    )}
+                                                    {msg.response_time_ms !=
+                                                        null && (
+                                                        <span>
+                                                            Waktu:{" "}
+                                                            {(
+                                                                msg.response_time_ms /
+                                                                1000
+                                                            ).toFixed(1)}
+                                                            s
                                                         </span>
                                                     )}
                                                 </div>

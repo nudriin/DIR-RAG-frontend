@@ -88,6 +88,7 @@ export interface ChatResponse {
     trace: TraceEntry[]
     debug_logs: DebugLogs
     effective_role?: Role | string | null
+    response_time_ms?: number
 }
 
 export interface ConversationSummary {

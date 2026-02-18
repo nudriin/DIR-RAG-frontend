@@ -113,6 +113,7 @@ export default function ChatPage() {
 
     const confidence = result?.confidence
     const iterations = result?.iterations
+    const responseTimeMs = result?.response_time_ms
 
     return (
         <div className="flex min-h-[calc(100vh-4rem)] flex-col">
@@ -259,6 +260,18 @@ export default function ChatPage() {
                                                                 confidence * 100
                                                             ).toFixed(1)}
                                                             %
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {responseTimeMs != null && (
+                                                    <div className="rounded-full bg-background border px-2.5 py-1">
+                                                        Waktu:{" "}
+                                                        <span className="font-mono text-primary">
+                                                            {(
+                                                                responseTimeMs /
+                                                                1000
+                                                            ).toFixed(1)}
+                                                            s
                                                         </span>
                                                     </div>
                                                 )}
