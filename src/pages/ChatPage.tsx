@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { postChat, ApiError } from "../api/client"
-import type { ChatResponse } from "../types/api"
+import type { ChatResponse, Role } from "../types/api"
 import ErrorMessage from "../components/ErrorMessage"
 import SourcesList from "../components/SourcesList"
 import DebugPanel from "../components/DebugPanel"
@@ -15,9 +15,12 @@ import InlineThinking from "@/components/InlineThinking"
 import useThinkingStream from "@/hooks/useThinkingStream"
 import type { RAGStage } from "@/api/logsStream"
 import { useConversation } from "@/context/conversation-store"
+import { roleValueToLabel, ROLE_CHIPS } from "@/utils/roles"
 
 export default function ChatPage() {
     const [query, setQuery] = useState("")
+    const [selectedRole, setSelectedRole] = useState<Role | null>(null)
+    const [lastRole, setLastRole] = useState<Role | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [result, setResult] = useState<ChatResponse | null>(null)
@@ -61,9 +64,13 @@ export default function ChatPage() {
         try {
             let data: ChatResponse | null = null
             try {
+                const uRole: Role | null = selectedRole
+                const tRole: Role | null = null
                 data = await postChat({
                     query: trimmed,
                     conversationId: activeConversationId,
+                    userRole: uRole,
+                    targetRole: tRole,
                 })
             } catch (err) {
                 if (
@@ -73,7 +80,13 @@ export default function ChatPage() {
                 ) {
                     setError("Percakapan tidak ditemukan, memulai baru")
                     resetConversation()
-                    data = await postChat({ query: trimmed })
+                    const u2: Role | null = selectedRole
+                    const t2: Role | null = null
+                    data = await postChat({
+                        query: trimmed,
+                        userRole: u2,
+                        targetRole: t2,
+                    })
                 } else {
                     throw err
                 }
@@ -81,6 +94,7 @@ export default function ChatPage() {
             if (data) {
                 setResult(data)
                 setActiveConversationId(data.conversation_id)
+                setLastRole(selectedRole)
             }
         } catch (err) {
             if (err instanceof ApiError) {
@@ -105,29 +119,60 @@ export default function ChatPage() {
             {/* Input Area */}
             <div className="border-b bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:p-6">
                 <div className="mx-auto max-w-3xl">
-                    <form className="flex gap-2" onSubmit={handleSubmit}>
-                        <Textarea
-                            className="h-auto min-h-[96px] text-base shadow-sm resize-y"
-                            placeholder="Ketik pertanyaan Anda di sini..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            disabled={loading}
-                            autoFocus
-                            rows={3}
-                        />
-                        <Button
-                            size="lg"
-                            className="h-12 px-6"
-                            type="submit"
-                            disabled={loading || !query.trim()}
-                        >
-                            {loading ? (
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                            ) : (
-                                <Send className="mr-2 h-4 w-4" />
+                    <div className="mb-4">
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+                            {ROLE_CHIPS.map((opt) => {
+                                const active = selectedRole === opt.value
+                                return (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() =>
+                                            setSelectedRole(opt.value)
+                                        }
+                                        className={`rounded-full border px-4 py-3 text-sm font-medium transition-colors hover:border-primary hover:shadow-sm ${active ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-border bg-background text-foreground"}`}
+                                        aria-pressed={active}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+                    <form className="flex gap-3" onSubmit={handleSubmit}>
+                        <div className="flex-1 space-y-2">
+                            <Textarea
+                                className="h-auto min-h-[96px] text-base shadow-sm resize-y"
+                                placeholder="Tulis pertanyaanmu…"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                disabled={loading || !selectedRole}
+                                autoFocus
+                                rows={3}
+                            />
+                            {!selectedRole && (
+                                <p className="text-xs text-muted-foreground">
+                                    Pilih peran Anda terlebih dahulu
+                                </p>
                             )}
-                            Kirim
-                        </Button>
+                        </div>
+                        <div className="flex items-start">
+                            <Button
+                                size="lg"
+                                className="h-12 px-6"
+                                type="submit"
+                                disabled={
+                                    loading || !query.trim() || !selectedRole
+                                }
+                            >
+                                {loading ? (
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                ) : (
+                                    <Send className="mr-2 h-4 w-4" />
+                                )}
+                                Kirim
+                            </Button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -188,7 +233,16 @@ export default function ChatPage() {
                                                     Jawaban AI
                                                 </CardTitle>
                                             </div>
-                                            <div className="flex gap-3 text-xs font-medium text-muted-foreground">
+                                            <div className="flex flex-wrap gap-3 text-xs font-medium text-muted-foreground">
+                                                <div className="rounded-full bg-background border px-2.5 py-1">
+                                                    Peran:{" "}
+                                                    <span className="text-primary">
+                                                        {roleValueToLabel(
+                                                            (result.effective_role as string) ??
+                                                                lastRole,
+                                                        )}
+                                                    </span>
+                                                </div>
                                                 {iterations != null && (
                                                     <div className="rounded-full bg-background border px-2.5 py-1">
                                                         Iterasi:{" "}

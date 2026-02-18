@@ -5,9 +5,13 @@
 
 // ─── Chat ────────────────────────────────────────────────────────────────────
 
+export type Role = "siswa" | "pengajar" | "admin_sekolah" | "pengawas" | "dinas"
+
 export interface ChatRequest {
     query: string
     conversation_id?: number | null
+    user_role?: Role | null
+    target_role?: Role | null
 }
 
 export interface Source {
@@ -79,6 +83,7 @@ export interface ChatResponse {
     confidence: number
     trace: TraceEntry[]
     debug_logs: DebugLogs
+    effective_role?: Role | string | null
 }
 
 export interface ConversationSummary {

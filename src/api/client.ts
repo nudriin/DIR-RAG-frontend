@@ -20,6 +20,7 @@ import type {
     VectorDeleteResponse,
     VectorSourcesResponse,
     VectorSourceDetailResponse,
+    Role,
 } from "../types/api"
 import { clearAuth, loadAuth, saveAuth } from "../auth/storage"
 
@@ -188,12 +189,16 @@ async function authorizedFetch(
 export function postChat(params: {
     query: string
     conversationId?: number | null
+    userRole?: Role | null
+    targetRole?: Role | null
 }): Promise<ChatResponse> {
     const body: ChatRequest = {
         query: params.query,
         ...(params.conversationId != null
             ? { conversation_id: params.conversationId }
             : {}),
+        ...(params.userRole ? { user_role: params.userRole } : {}),
+        ...(params.targetRole ? { target_role: params.targetRole } : {}),
     }
     return fetchJson<ChatResponse>("/chat", {
         method: "POST",
