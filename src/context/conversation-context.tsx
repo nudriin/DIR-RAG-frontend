@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useCallback, useMemo, useState } from "react"
 import type { ReactNode } from "react"
 import type { ConversationDetail, ConversationSummary } from "@/types/api"
 import {
@@ -16,10 +16,10 @@ export function ConversationProvider({ children }: { children: ReactNode }) {
     const [conversationDetail, setConversationDetail] =
         useState<ConversationDetail | null>(null)
 
-    const resetConversation = () => {
+    const resetConversation = useCallback(() => {
         setActiveConversationId(null)
         setConversationDetail(null)
-    }
+    }, [])
 
     const value: ConversationState = useMemo(
         () => ({

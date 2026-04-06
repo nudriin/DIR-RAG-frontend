@@ -20,6 +20,9 @@ import type {
     VectorDeleteResponse,
     VectorSourcesResponse,
     VectorSourceDetailResponse,
+    SettingsResponse,
+    SettingUpdateRequest,
+    SettingUpdateResponse,
     Role,
 } from "../types/api"
 import { clearAuth, loadAuth, saveAuth } from "../auth/storage"
@@ -359,4 +362,19 @@ export function getVectorsSourceDetail(
         `/vectors/source-detail?source=${encodeURIComponent(source)}`,
         { method: "GET" },
     )
+}
+
+// ─── Settings ────────────────────────────────────────────────────────────────
+
+export function getSettings(): Promise<SettingsResponse> {
+    return fetchAuthJson<SettingsResponse>("/settings", { method: "GET" })
+}
+
+export function updateSetting(
+    data: SettingUpdateRequest,
+): Promise<SettingUpdateResponse> {
+    return fetchAuthJson<SettingUpdateResponse>("/settings", {
+        method: "PUT",
+        body: JSON.stringify(data),
+    })
 }

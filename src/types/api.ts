@@ -233,3 +233,24 @@ export interface VectorSourceDetailResponse {
     num_chunks: number
     chunks: ChunkEntry[]
 }
+
+// ─── Settings ────────────────────────────────────────────────────────────────
+
+export interface SettingsMap {
+    refinement_backend: string
+    [key: string]: string
+}
+
+export interface SettingsResponse {
+    settings: SettingsMap
+}
+
+export interface SettingUpdateRequest {
+    key: string
+    value: string
+}
+
+export interface SettingUpdateResponse {
+    key: string
+    value: string
+}

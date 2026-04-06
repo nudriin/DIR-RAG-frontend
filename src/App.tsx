@@ -13,6 +13,7 @@ import IngestPage from "./pages/admin/IngestPage"
 import VectorsResetPage from "./pages/admin/VectorsResetPage"
 import VectorsSourcesPage from "./pages/admin/VectorsSourcesPage"
 import VectorsSourceDetailPage from "./pages/admin/VectorsSourceDetailPage"
+import SettingsPage from "./pages/admin/SettingsPage"
 
 export default function App() {
     const isEvaluateEnabled =
@@ -54,6 +55,10 @@ export default function App() {
                     <Route
                         path="vectors/source-detail"
                         element={<VectorsSourceDetailPage />}
+                    />
+                    <Route
+                        path="settings"
+                        element={<SettingsPage />}
                     />
                 </Route>
             </Routes>

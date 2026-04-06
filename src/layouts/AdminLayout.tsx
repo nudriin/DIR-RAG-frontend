@@ -7,6 +7,7 @@ import {
     Clock,
     LayoutDashboard,
     BarChart,
+    Settings,
     Menu,
     X,
 } from "lucide-react"
@@ -24,6 +25,7 @@ const navItems = [
     { to: "/admin/ingest", icon: Upload, label: "Ingest" },
     { to: "/admin/vectors/sources", icon: Database, label: "Sources" },
     { to: "/admin/vectors/reset", icon: RotateCcw, label: "Reset Vectors" },
+    { to: "/admin/settings", icon: Settings, label: "Settings" },
 ]
 
 export default function AdminLayout() {
