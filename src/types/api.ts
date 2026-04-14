@@ -22,6 +22,8 @@ export interface ChatRequest {
 
 export interface Source {
     id: number
+    chunk_id?: string
+    source?: string
 }
 
 export interface TraceEntry {
@@ -94,6 +96,7 @@ export interface ChatResponse {
 export interface ConversationSummary {
     id: number
     title: string
+    created_at?: string
 }
 
 export interface ConversationMessage {
