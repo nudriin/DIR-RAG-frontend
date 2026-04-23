@@ -378,3 +378,38 @@ export function updateSetting(
         body: JSON.stringify(data),
     })
 }
+
+// ─── Gemini Service Account ───────────────────────────────────────────────────
+
+export interface GeminiSaUploadResponse {
+    status: string
+    message: string
+    project_id: string | null
+    client_email: string | null
+    filename: string
+}
+
+export interface GeminiSaStatusResponse {
+    has_sa: boolean
+    filename: string | null
+    project_id: string | null
+    client_email?: string | null
+}
+
+export async function uploadGeminiServiceAccount(
+    file: File,
+): Promise<GeminiSaUploadResponse> {
+    const form = new FormData()
+    form.append("file", file)
+    const res = await authorizedFetch("/settings/gemini-sa", {
+        method: "POST",
+        body: form,
+    })
+    return res.json() as Promise<GeminiSaUploadResponse>
+}
+
+export function getGeminiSaStatus(): Promise<GeminiSaStatusResponse> {
+    return fetchAuthJson<GeminiSaStatusResponse>("/settings/gemini-sa", {
+        method: "GET",
+    })
+}
