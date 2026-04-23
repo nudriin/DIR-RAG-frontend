@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
     deleteAllHistory,
     deleteConversationHistory,
@@ -33,9 +33,12 @@ import { useConversation } from "@/context/conversation-store"
 import { cn } from "@/lib/utils"
 import { Loader2, RefreshCw, Trash2 } from "lucide-react"
 
+const FEEDBACK_ENABLED =
+    import.meta.env.VITE_ADMIN_FEEDBACK_ENABLED === "true"
+
 export default function HistoryPage() {
     const [items, setItems] = useState<ConversationSummary[]>([])
-    const [offset, setOffset] = useState(0)
+    const offsetRef = useRef(0)
     const [hasMore, setHasMore] = useState(true)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -86,10 +89,11 @@ export default function HistoryPage() {
             setError(null)
             try {
                 const limit = 20
-                const nextOffset = append ? offset : 0
+                const nextOffset = append ? offsetRef.current : 0
                 const data = await getHistory({ offset: nextOffset, limit })
                 setItems((prev) => (append ? [...prev, ...data] : data))
-                setOffset(nextOffset + data.length)
+                const newOffset = nextOffset + data.length
+                offsetRef.current = newOffset
                 setHasMore(data.length === limit)
             } catch (err) {
                 if (err instanceof ApiError) {
@@ -101,7 +105,7 @@ export default function HistoryPage() {
                 setLoading(false)
             }
         },
-        [offset],
+        [],
     )
 
     const loadDetail = async (id: number) => {
@@ -234,7 +238,7 @@ export default function HistoryPage() {
         try {
             await deleteAllHistory()
             setItems([])
-            setOffset(0)
+            offsetRef.current = 0
             setHasMore(false)
             setDetail(null)
             setDetailMessages([])
@@ -522,126 +526,141 @@ export default function HistoryPage() {
                                                         )}
                                                     </div>
                                                 )}
-                                                {msg.role === "assistant" && (
-                                                    <div className="mt-3 space-y-2">
-                                                        <div className="flex flex-wrap gap-2">
-                                                            {[
-                                                                1, 2, 3, 4, 5,
-                                                            ].map((score) => {
-                                                                const feedback =
+                                                {msg.role === "assistant" &&
+                                                    FEEDBACK_ENABLED && (
+                                                        <div className="mt-3 space-y-2">
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {[
+                                                                    1, 2, 3, 4,
+                                                                    5,
+                                                                ].map(
+                                                                    (score) => {
+                                                                        const feedback =
+                                                                            feedbackState[
+                                                                                msg
+                                                                                    .id
+                                                                            ] ?? {
+                                                                                score: null,
+                                                                                comment:
+                                                                                    "",
+                                                                                submitting: false,
+                                                                                success: false,
+                                                                                error: null,
+                                                                            }
+                                                                        return (
+                                                                            <Button
+                                                                                key={
+                                                                                    score
+                                                                                }
+                                                                                size="sm"
+                                                                                variant={
+                                                                                    feedback.score ===
+                                                                                    score
+                                                                                        ? "default"
+                                                                                        : "outline"
+                                                                                }
+                                                                                onClick={() =>
+                                                                                    updateFeedback(
+                                                                                        msg.id,
+                                                                                        {
+                                                                                            score,
+                                                                                            success: false,
+                                                                                        },
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                {
+                                                                                    score
+                                                                                }
+                                                                            </Button>
+                                                                        )
+                                                                    },
+                                                                )}
+                                                            </div>
+                                                            <Textarea
+                                                                rows={2}
+                                                                placeholder="Komentar (opsional)"
+                                                                value={
                                                                     feedbackState[
                                                                         msg.id
-                                                                    ] ?? {
-                                                                        score: null,
-                                                                        comment:
-                                                                            "",
-                                                                        submitting: false,
-                                                                        success: false,
-                                                                        error: null,
-                                                                    }
-                                                                return (
-                                                                    <Button
-                                                                        key={
-                                                                            score
-                                                                        }
-                                                                        size="sm"
-                                                                        variant={
-                                                                            feedback.score ===
-                                                                            score
-                                                                                ? "default"
-                                                                                : "outline"
-                                                                        }
-                                                                        onClick={() =>
-                                                                            updateFeedback(
-                                                                                msg.id,
-                                                                                {
-                                                                                    score,
-                                                                                    success: false,
-                                                                                },
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        {score}
-                                                                    </Button>
-                                                                )
-                                                            })}
-                                                        </div>
-                                                        <Textarea
-                                                            rows={2}
-                                                            placeholder="Komentar (opsional)"
-                                                            value={
-                                                                feedbackState[
-                                                                    msg.id
-                                                                ]?.comment ?? ""
-                                                            }
-                                                            onChange={(e) =>
-                                                                updateFeedback(
-                                                                    msg.id,
-                                                                    {
-                                                                        comment:
-                                                                            e
-                                                                                .target
-                                                                                .value,
-                                                                        success: false,
-                                                                    },
-                                                                )
-                                                            }
-                                                            className="text-xs"
-                                                            disabled={
-                                                                feedbackState[
-                                                                    msg.id
-                                                                ]?.submitting
-                                                            }
-                                                        />
-                                                        <div className="flex flex-wrap items-center gap-3 text-[10px]">
-                                                            <Button
-                                                                size="sm"
-                                                                onClick={() =>
-                                                                    handleSubmitFeedback(
+                                                                    ]
+                                                                        ?.comment ??
+                                                                    ""
+                                                                }
+                                                                onChange={(e) =>
+                                                                    updateFeedback(
                                                                         msg.id,
+                                                                        {
+                                                                            comment:
+                                                                                e
+                                                                                    .target
+                                                                                    .value,
+                                                                            success: false,
+                                                                        },
                                                                     )
                                                                 }
+                                                                className="text-xs"
                                                                 disabled={
-                                                                    !feedbackState[
-                                                                        msg.id
-                                                                    ]?.score ||
                                                                     feedbackState[
                                                                         msg.id
                                                                     ]
                                                                         ?.submitting
                                                                 }
-                                                            >
-                                                                {feedbackState[
-                                                                    msg.id
-                                                                ]
-                                                                    ?.submitting ? (
-                                                                    <RefreshCw className="mr-2 h-3 w-3 animate-spin" />
-                                                                ) : null}
-                                                                Kirim Feedback
-                                                            </Button>
-                                                            {feedbackState[
-                                                                msg.id
-                                                            ]?.success && (
-                                                                <span className="text-green-600">
-                                                                    Feedback
-                                                                    tersimpan
-                                                                </span>
-                                                            )}
-                                                            {feedbackState[
-                                                                msg.id
-                                                            ]?.error && (
-                                                                <span className="text-destructive">
-                                                                    {
+                                                            />
+                                                            <div className="flex flex-wrap items-center gap-3 text-[10px]">
+                                                                <Button
+                                                                    size="sm"
+                                                                    onClick={() =>
+                                                                        handleSubmitFeedback(
+                                                                            msg.id,
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        !feedbackState[
+                                                                            msg
+                                                                                .id
+                                                                        ]
+                                                                            ?.score ||
                                                                         feedbackState[
                                                                             msg
                                                                                 .id
-                                                                        ]?.error
+                                                                        ]
+                                                                            ?.submitting
                                                                     }
-                                                                </span>
-                                                            )}
+                                                                >
+                                                                    {feedbackState[
+                                                                        msg.id
+                                                                    ]
+                                                                        ?.submitting ? (
+                                                                        <RefreshCw className="mr-2 h-3 w-3 animate-spin" />
+                                                                    ) : null}
+                                                                    Kirim
+                                                                    Feedback
+                                                                </Button>
+                                                                {feedbackState[
+                                                                    msg.id
+                                                                ]?.success && (
+                                                                    <span className="text-green-600">
+                                                                        Feedback
+                                                                        tersimpan
+                                                                    </span>
+                                                                )}
+                                                                {feedbackState[
+                                                                    msg.id
+                                                                ]?.error && (
+                                                                    <span className="text-destructive">
+                                                                        {
+                                                                            feedbackState[
+                                                                                msg
+                                                                                    .id
+                                                                            ]
+                                                                                ?.error
+                                                                        }
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                )}
+                                                    )}
                                             </div>
                                         </div>
                                     ))}
