@@ -24,7 +24,14 @@ export default function App() {
             <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/conversation" element={<ConversationPage />} />
-                <Route path="/chat" element={<ChatPage />} />
+                <Route
+                    path="/chat"
+                    element={
+                        <AdminGuard>
+                            <ChatPage />
+                        </AdminGuard>
+                    }
+                />
                 <Route path="/admin/login" element={<AdminLoginPage />} />
                 <Route
                     path="/admin"
