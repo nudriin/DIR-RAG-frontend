@@ -335,8 +335,12 @@ export default function ChatPage() {
                         <div className="rounded-md border bg-card text-card-foreground shadow-sm">
                             <div className="border-b bg-muted/20 px-4 py-3">
                                 <span className="text-sm font-semibold">
-                                    Filter Thinking
+                                    Tampilkan Log Proses
                                 </span>
+                                <p className="mt-0.5 text-[11px] text-muted-foreground leading-snug">
+                                    Aktifkan untuk menampilkan visualisasi log.<br />
+                                    Semua proses tetap berjalan meski dinonaktifkan.
+                                </p>
                             </div>
                             <div className="px-4 py-3">
                                 <div className="grid grid-cols-1 gap-3 text-xs">
